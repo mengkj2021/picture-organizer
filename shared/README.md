@@ -57,3 +57,13 @@
 - 规则在会话开始时注入，**修改后需新建对话才能生效**
 - 规则正文使用 UTF-8 编码保存，避免中文乱码
 - 工具通过规则文件获知项目说明位置，实际内容以本文件为准
+
+## 首次构建（Android 工程）
+
+Gradle Wrapper 使用本地 `gradle-9.7.1-bin.zip`（相对路径，不提交 Git）。克隆后需自行放置该 zip 到项目根目录，或临时将 `gradle/wrapper/gradle-wrapper.properties` 的 `distributionUrl` 改为官方 URL：
+
+```
+https://services.gradle.org/distributions/gradle-9.7.1-bin.zip
+```
+
+项目路径含中文时，`gradle.properties` 中 `android.overridePathCheck=true` 为必需项；迁移至纯 ASCII 路径后可移除。详见根目录 [README.md](../README.md)。
