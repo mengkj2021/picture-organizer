@@ -31,3 +31,14 @@ shared/skills/<skill-name>/
 ## 当前技能
 
 - （暂无，待补充）
+
+### 建议优先补充（功能开发阶段）
+
+| 技能名 | 用途 | 优先级 |
+|--------|------|--------|
+| `create-screen-doc` | 新增画面时自动走文档 SOP（模板 → 路由表 → 式样书第 5 章） | 高 |
+| `implement-screen` | 读画面文档 → 实现 Kotlin + 路由注册 | 高 |
+| `sync-docs` | 检查 docs/ 三处交叉引用是否一致 | 中 |
+| `update-build-deps` | 添加依赖时同步改 toml + build.gradle + 式样书 3.1 | 中 |
+
+> 本项目全部代码由 AI 开发；上述技能覆盖文档、代码实现与构建配置的重复性流程。

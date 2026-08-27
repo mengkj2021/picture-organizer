@@ -8,14 +8,18 @@
 图片整理/
 ├── shared/                            # ★ 唯一维护入口（改动都从这里开始）
 │   ├── README.md                      # 项目说明（CodeBuddy / Cursor 共用一份）
+│   ├── 常用语句.md                    # AI 协作提示词模板（复制粘贴用）
 │   ├── rules/
-│   │   └── sync-convention.md         # 统一规则源（Markdown + frontmatter）
+│   │   ├── sync-convention.md         # 双工具规则同步约定
+│   │   └── dev-convention.md          # AI 全量开发、文档先行约定
 │   └── skills/
 │       └── README.md                  # 技能模板框架说明
 ├── .codebuddy/rules/                  # CodeBuddy 实际读取（从 shared 同步）
-│   └── sync-convention/RULE.mdc
+│   ├── sync-convention/RULE.mdc
+│   └── dev-convention/RULE.mdc
 └── .cursor/rules/                     # Cursor 实际读取（从 shared 同步）
-    └── sync-convention.mdc
+    ├── sync-convention.mdc
+    └── dev-convention.mdc
 ```
 
 ## 维护流程
@@ -25,6 +29,7 @@
 | 改动内容 | 维护入口 | 同步目标 |
 |----------|----------|----------|
 | 项目说明 | `shared/README.md` | 无需同步（规则文件已引用本文件） |
+| AI 提示词 | `shared/常用语句.md` | 无需同步（按需复制到对话） |
 | 规则 | `shared/rules/<name>.md` | `.codebuddy/rules/<name>/RULE.mdc` + `.cursor/rules/<name>.mdc` |
 | 技能 | `shared/skills/<name>/` | 各工具技能目录 |
 
