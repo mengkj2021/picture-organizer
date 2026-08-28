@@ -12,17 +12,18 @@
 | [docs/路由设计.md](docs/路由设计.md) | Navigation Compose 路由命名与导航图 |
 | [docs/画面/](docs/画面/) | 各画面详细规格 |
 | [docs/代码优化/](docs/代码优化/) | 代码改动清单（优化项与实施依据） |
-| [docs/开发日志-2026-08-27.md](docs/开发日志-2026-08-27.md) | 主画面与数据层架子开发记录 |
+| [docs/开发日志-2026-08-27.md](docs/开发日志-2026-08-27.md) | 主画面与数据层架子 |
+| [docs/开发日志-2026-08-28.md](docs/开发日志-2026-08-28.md) | 导入画面、Room、三目录与删除 |
 | [提交注意事项.md](提交注意事项.md) | Git 账号、编码、提交范围约定 |
-| [shared/常用语句.md](shared/常用语句.md) | AI 协作提示词模板（复制粘贴用） |
+| [shared/prompts/](shared/prompts/) | 拉入对话执行的提示词（如 [功能开发.md](shared/prompts/功能开发.md)） |
 
-## 当前进度（v0.7）
+## 当前进度（v0.8）
 
-- `splash` → `main` 自动导航
-- 主画面三 Tab（待处理 / 已确认 / 不修改）+ 假数据列表 + 编辑批量改状态
-- MVVM + Repository 模式（`MainViewModel` + `MockImageRepository`）
-- Room 数据库架子已就绪（Mock 仍为数据源）
-- 详见 [架构设计](docs/架构设计.md)、[开发日志 · 2026-08-27](docs/开发日志-2026-08-27.md)
+- `splash` → `main` ↔ `import-images`
+- 主画面三 Tab + Room；编辑批量「移动到」（改库 + 搬文件）
+- 导入：相册 / 文件 → 压缩 → `images/pending/` + Room
+- 不修改 Tab：真实删除（文件 + DB）
+- 详见 [架构设计](docs/架构设计.md)、[开发日志 · 2026-08-28](docs/开发日志-2026-08-28.md)
 
 ## 首次构建
 
@@ -60,6 +61,6 @@ gradlew.bat assembleDebug
 
 ## 开发约定
 
-- **全部代码**：由 AI 开发（文档先行，见 [shared/常用语句.md](shared/常用语句.md)）
+- **全部代码**：由 AI 开发（文档先行，见 [shared/prompts/功能开发.md](shared/prompts/功能开发.md)）
 - **构建配置与文档**：由 AI 维护
 - **用户**：提需求、确认待定项、Review 与验收
