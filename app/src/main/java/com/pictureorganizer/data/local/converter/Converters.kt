@@ -1,21 +1,23 @@
 package com.pictureorganizer.data.local.converter
 
 import androidx.room.TypeConverter
+import org.json.JSONArray
 
 class Converters {
 
     @TypeConverter
     fun fromTagsJson(json: String): List<String> {
         if (json.isBlank()) return emptyList()
-        return json.split(TAG_SEPARATOR)
+        return runCatching {
+            val array = JSONArray(json)
+            List(array.length()) { index -> array.getString(index) }
+        }.getOrElse { emptyList() }
     }
 
     @TypeConverter
     fun toTagsJson(tags: List<String>): String {
-        return tags.joinToString(TAG_SEPARATOR)
-    }
-
-    companion object {
-        private const val TAG_SEPARATOR = "\u001F"
+        val array = JSONArray()
+        tags.forEach { array.put(it) }
+        return array.toString()
     }
 }

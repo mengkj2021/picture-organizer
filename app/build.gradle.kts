@@ -50,6 +50,11 @@ kotlin {
     }
 }
 
+ksp {
+    // Room schema 导出目录（对应 AppDatabase exportSchema=true，为 Migration v2 提供基线）
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

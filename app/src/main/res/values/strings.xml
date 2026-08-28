@@ -16,5 +16,11 @@
     <string name="move_to_pending">待处理</string>
     <string name="move_to_confirmed">已确认</string>
     <string name="move_to_no_modify">不修改</string>
-    <string name="feature_coming_soon">功能开发中</string>
+    <string name="import_title">导入图片</string>
+    <string name="import_from_gallery">从相册选择</string>
+    <string name="import_from_files">从文件选择</string>
+    <string name="import_progress">正在导入 %1$d/%2$d</string>
+    <string name="import_fail_all">全部导入失败</string>
+    <string name="import_fail_partial">导入完成：%1$d 张成功，%2$d 张失败</string>
+    <string name="action_back">返回</string>
 </resources>

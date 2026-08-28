@@ -3,34 +3,52 @@ package com.pictureorganizer.data.repository
 import com.pictureorganizer.data.mock.MockImageListData
 import com.pictureorganizer.model.ImageListItem
 import com.pictureorganizer.model.ImageStatus
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 
+/**
+ * 内存假数据，仅供 Preview / 测试。生产路径使用 [RoomImageRepository]。
+ */
 object MockImageRepository : ImageRepository {
 
-    private val pendingItems =
-        MockImageListData.pendingItems().toMutableList()
-    private val confirmedItems =
-        MockImageListData.confirmedItems().toMutableList()
-    private val noModifyItems =
-        MockImageListData.noModifyItems().toMutableList()
+    private val items = MutableStateFlow(
+        MockImageListData.pendingItems() +
+            MockImageListData.confirmedItems() +
+            MockImageListData.noModifyItems()
+    )
 
-    override fun getItems(status: ImageStatus): List<ImageListItem> = when (status) {
-        ImageStatus.Pending -> pendingItems.toList()
-        ImageStatus.Confirmed -> confirmedItems.toList()
-        ImageStatus.NoModify -> noModifyItems.toList()
+    override fun observeItems(status: ImageStatus): Flow<List<ImageListItem>> {
+        return items.map { list -> list.filter { it.status == status } }
     }
 
-    override fun moveItems(ids: Set<String>, from: ImageStatus, to: ImageStatus) {
+    override suspend fun getItems(status: ImageStatus): List<ImageListItem> {
+        return items.value.filter { it.status == status }
+    }
+
+    override suspend fun moveItems(ids: Set<String>, from: ImageStatus, to: ImageStatus) {
         if (ids.isEmpty() || from == to) return
-        val source = listFor(status = from)
-        val target = listFor(status = to)
-        val moved = source.filter { it.id in ids }.map { it.withStatus(to) }
-        source.removeAll { it.id in ids }
-        target.addAll(moved)
+        items.update { list ->
+            list.map { item ->
+                if (item.id in ids && item.status == from) item.withStatus(to) else item
+            }
+        }
     }
 
-    private fun listFor(status: ImageStatus): MutableList<ImageListItem> = when (status) {
-        ImageStatus.Pending -> pendingItems
-        ImageStatus.Confirmed -> confirmedItems
-        ImageStatus.NoModify -> noModifyItems
+    override suspend fun deleteItems(ids: Set<String>) {
+        if (ids.isEmpty()) return
+        items.update { list -> list.filterNot { it.id in ids } }
     }
+
+    override suspend fun insert(
+        item: ImageListItem,
+        filePath: String,
+        fileName: String,
+        importedAt: Long
+    ) {
+        items.update { it + item }
+    }
+
+    override suspend fun migrateFlatPathsIfNeeded() = Unit
 }

@@ -25,13 +25,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pictureorganizer.R
+import com.pictureorganizer.data.repository.MockImageRepository
 import com.pictureorganizer.ui.main.tab.ImageListTab
 import com.pictureorganizer.ui.theme.PictureOrganizerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    viewModel: MainViewModel = viewModel(),
+    viewModel: MainViewModel,
+    onNavigateToImport: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -46,6 +48,7 @@ fun MainScreen(
                         message = context.getString(effect.messageResId)
                     )
                 }
+                MainUiEffect.NavigateToImport -> onNavigateToImport()
             }
         }
     }
@@ -109,6 +112,8 @@ fun MainScreen(
 @Composable
 private fun MainScreenPreview() {
     PictureOrganizerTheme {
-        MainScreen()
+        MainScreen(
+            viewModel = MainViewModel(MockImageRepository)
+        )
     }
 }
