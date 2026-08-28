@@ -27,9 +27,10 @@ provider: both
 | 文档 | 用途 |
 |------|------|
 | `docs/项目式样说明书.md` | 功能、技术栈、架构 |
+| `docs/架构设计.md` | MVVM、包结构、Room、数据流 |
 | `docs/路由设计.md` | route 命名与导航图 |
 | `docs/画面/` | 各画面详细规格 |
-| `shared/常用语句.md` | AI 协作提示词模板 |
+| `shared/prompts/` | 拉入对话执行的提示词模板（如功能开发、式样问答） |
 
 ## 强制约定
 
@@ -43,7 +44,8 @@ provider: both
    - 领域 / UI 模型放 `model/`（无 Android 框架依赖为佳）
    - 数据访问放 `data/repository/`
    - Room 持久化放 `data/local/`（Entity、DAO、Database、Converter）
-   - 假数据种子放 `data/mock/`（开发期保留）
+   - Entity ↔ UI 映射放 `data/mapper/`
+   - 假数据种子放 `data/mock/`（开发期保留，Preview / 测试）
    - 文件 / 图片等无 UI 工具类放 `util/`
    - route 常量集中定义于 `navigation/Routes.kt`
 

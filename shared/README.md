@@ -8,7 +8,10 @@
 图片整理/
 ├── shared/                            # ★ 唯一维护入口（改动都从这里开始）
 │   ├── README.md                      # 项目说明（CodeBuddy / Cursor 共用一份）
-│   ├── 常用语句.md                    # AI 协作提示词模板（复制粘贴用）
+│   ├── prompts/                       # 拉入对话执行的提示词模板
+│   │   ├── README.md
+│   │   ├── 功能开发.md
+│   │   └── 式样问答.md
 │   ├── rules/
 │   │   ├── sync-convention.md         # 双工具规则同步约定
 │   │   └── dev-convention.md          # AI 全量开发、文档先行约定
@@ -29,7 +32,7 @@
 | 改动内容 | 维护入口 | 同步目标 |
 |----------|----------|----------|
 | 项目说明 | `shared/README.md` | 无需同步（规则文件已引用本文件） |
-| AI 提示词 | `shared/常用语句.md` | 无需同步（按需复制到对话） |
+| AI 提示词 | `shared/prompts/` | 无需同步（拉入对话并填写模板填写区） |
 | 规则 | `shared/rules/<name>.md` | `.codebuddy/rules/<name>/RULE.mdc` + `.cursor/rules/<name>.mdc` |
 | 技能 | `shared/skills/<name>/` | 各工具技能目录 |
 
@@ -65,7 +68,7 @@
 
 ## 首次构建（Android 工程）
 
-Gradle Wrapper 使用本地 `gradle-9.7.1-bin.zip`（相对路径，不提交 Git）。克隆后需自行放置该 zip 到项目根目录，或临时将 `gradle/wrapper/gradle-wrapper.properties` 的 `distributionUrl` 改为官方 URL：
+Gradle Wrapper 使用本地 `gradle-9.7.1-bin.zip`（相对路径，不提交 Git）。克隆后需自行放置该 zip 到 `gradle/wrapper/` 目录（与 `gradle-wrapper.properties` 同级），或临时将 `gradle/wrapper/gradle-wrapper.properties` 的 `distributionUrl` 改为官方 URL：
 
 ```
 https://services.gradle.org/distributions/gradle-9.7.1-bin.zip
