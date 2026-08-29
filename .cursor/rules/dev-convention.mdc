@@ -3,7 +3,7 @@ description: AI 全量开发约定，文档先行，以式样书与路由设计�
 globs: **/*
 alwaysApply: true
 enabled: true
-updatedAt: 2026-08-27
+updatedAt: 2026-08-29
 provider: both
 ---
 
@@ -18,7 +18,7 @@ provider: both
 
 ## 默认开发流程（文档先行）
 
-1. **文档**：按 `docs/路由设计.md` 第 4 节新增画面文档，更新路由表与 `docs/项目式样说明书.md` 第 5 章
+1. **文档**：按 `docs/设计/路由设计.md` 第 4 节新增画面文档，更新路由表与 `docs/式样/项目式样说明书.md` 第 5 章
 2. **代码**：按 `docs/画面/` 实现 Kotlin、注册 route
 3. **Review**：用户验收
 
@@ -26,11 +26,14 @@ provider: both
 
 | 文档 | 用途 |
 |------|------|
-| `docs/项目式样说明书.md` | 功能、技术栈、架构 |
-| `docs/架构设计.md` | MVVM、包结构、Room、数据流 |
-| `docs/路由设计.md` | route 命名与导航图 |
+| `docs/README.md` | docs 分类索引 |
+| `docs/式样/项目式样说明书.md` | 功能、技术栈、版本矩阵 |
+| `docs/设计/架构设计.md` | MVVM、包结构、Room、数据流 |
+| `docs/设计/路由设计.md` | route 命名与导航图 |
 | `docs/画面/` | 各画面详细规格 |
-| `shared/prompts/` | 拉入对话执行的提示词模板（如功能开发、式样问答） |
+| `docs/日志/` | 按日开发日志 |
+| `docs/工程/改动清单.md` | 待办 backlog |
+| `shared/prompts/` | 拉入对话执行的提示词模板（功能开发、式样问答、文档整理） |
 
 ## 强制约定
 

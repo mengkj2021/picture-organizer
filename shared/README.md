@@ -11,7 +11,8 @@
 │   ├── prompts/                       # 拉入对话执行的提示词模板
 │   │   ├── README.md
 │   │   ├── 功能开发.md
-│   │   └── 式样问答.md
+│   │   ├── 式样问答.md
+│   │   └── 文档整理.md
 │   ├── rules/
 │   │   ├── sync-convention.md         # 双工具规则同步约定
 │   │   └── dev-convention.md          # AI 全量开发、文档先行约定
