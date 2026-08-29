@@ -7,23 +7,24 @@
 | 文档 | 说明 |
 |------|------|
 | [shared/README.md](shared/README.md) | AI 双工具维护约定与项目说明（**唯一维护入口**） |
-| [docs/项目式样说明书.md](docs/项目式样说明书.md) | 功能、技术栈、页面架构式样 |
-| [docs/架构设计.md](docs/架构设计.md) | MVVM、包结构、Room 设计、数据流 |
-| [docs/路由设计.md](docs/路由设计.md) | Navigation Compose 路由命名与导航图 |
+| [docs/README.md](docs/README.md) | **docs 分类索引**（式样 / 设计 / 画面 / 日志 / 工程） |
+| [docs/式样/项目式样说明书.md](docs/式样/项目式样说明书.md) | 功能、技术栈、页面架构式样 |
+| [docs/设计/架构设计.md](docs/设计/架构设计.md) | MVVM、包结构、Room 设计、数据流 |
+| [docs/设计/路由设计.md](docs/设计/路由设计.md) | Navigation Compose 路由命名与导航图 |
 | [docs/画面/](docs/画面/) | 各画面详细规格 |
-| [docs/代码优化/](docs/代码优化/) | 代码改动清单（优化项与实施依据） |
-| [docs/开发日志-2026-08-27.md](docs/开发日志-2026-08-27.md) | 主画面与数据层架子 |
-| [docs/开发日志-2026-08-28.md](docs/开发日志-2026-08-28.md) | 导入画面、Room、三目录与删除 |
+| [docs/工程/改动清单.md](docs/工程/改动清单.md) | 待办 backlog |
+| [docs/日志/](docs/日志/) | 按日开发日志 |
 | [提交注意事项.md](提交注意事项.md) | Git 账号、编码、提交范围约定 |
-| [shared/prompts/](shared/prompts/) | 拉入对话执行的提示词（如 [功能开发.md](shared/prompts/功能开发.md)） |
+| [shared/prompts/](shared/prompts/) | 拉入对话执行的提示词（功能开发 / 式样问答 / 文档整理） |
 
 ## 当前进度（v0.8）
 
-- `splash` → `main` ↔ `import-images`
-- 主画面三 Tab + Room；编辑批量「移动到」（改库 + 搬文件）
+- `splash` → `main` ↔ `import-images` / `image-detail/{imageId}`
+- 主画面三 Tab + Room；编辑批量「移动到」（改库 + 搬文件）；列表真实缩略图（Coil）
 - 导入：相册 / 文件 → 压缩 → `images/pending/` + Room
+- 详情：缩放浏览、重命名、标签 Room + Exif 双写；底部同状态缩略条
 - 不修改 Tab：真实删除（文件 + DB）
-- 详见 [架构设计](docs/架构设计.md)、[开发日志 · 2026-08-28](docs/开发日志-2026-08-28.md)
+- 详见 [架构设计](docs/设计/架构设计.md)、[开发日志 · 2026-08-29](docs/日志/开发日志-2026-08-29.md)
 
 ## 首次构建
 
