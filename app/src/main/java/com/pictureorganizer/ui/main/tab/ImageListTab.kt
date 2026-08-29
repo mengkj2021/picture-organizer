@@ -26,6 +26,7 @@ fun ImageListTab(
     onImportClick: () -> Unit,
     onDeleteClick: () -> Unit,
     onToggleSelect: (String) -> Unit,
+    onItemClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -52,7 +53,8 @@ fun ImageListTab(
                         item = item,
                         isEditMode = isEditMode,
                         isSelected = item.id in selectedIds,
-                        onToggleSelect = { onToggleSelect(item.id) }
+                        onToggleSelect = { onToggleSelect(item.id) },
+                        onClick = { onItemClick(item.id) }
                     )
                 }
             }

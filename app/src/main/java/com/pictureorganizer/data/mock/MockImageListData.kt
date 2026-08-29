@@ -2,6 +2,7 @@ package com.pictureorganizer.data.mock
 
 import com.pictureorganizer.model.ImageListItem
 import com.pictureorganizer.model.ImageStatus
+import com.pictureorganizer.util.file.toDirName
 
 object MockImageListData {
 
@@ -69,6 +70,7 @@ object MockImageListData {
         description = description,
         tags = tags,
         placeholderColorArgb = placeholderColors[colorIndex % placeholderColors.size],
-        status = status
+        status = status,
+        filePath = "${status.toDirName()}/$id.jpg"
     )
 }

@@ -76,7 +76,42 @@ class AppFileManager(private val context: Context) {
         }
     }
 
+    /**
+     * 同目录重命名。返回新的相对路径。
+     * @throws IllegalArgumentException 非法文件名或目标已存在
+     * @throws IllegalStateException 源文件不存在或重命名失败
+     */
+    fun renameInPlace(currentRelativePath: String, newFileName: String): String {
+        val trimmed = newFileName.trim()
+        require(trimmed.isNotEmpty()) { "文件名不能为空" }
+        require(!trimmed.contains('/') && !trimmed.contains('\\')) { "文件名不能包含路径分隔符" }
+        require(ILLEGAL_NAME_CHARS.none { it in trimmed }) { "文件名包含非法字符" }
+
+        val source = absoluteFile(currentRelativePath)
+        require(source.exists()) { "源文件不存在" }
+
+        val parentRel = currentRelativePath.substringBeforeLast('/', missingDelimiterValue = "")
+        val newRelative = if (parentRel.isEmpty()) trimmed else "$parentRel/$trimmed"
+        val dest = absoluteFile(newRelative)
+        if (source.absolutePath == dest.absolutePath) {
+            return newRelative
+        }
+        require(!dest.exists()) { "同目录已存在同名文件" }
+
+        dest.parentFile?.mkdirs()
+        val moved = source.renameTo(dest)
+        if (!moved) {
+            source.copyTo(dest, overwrite = false)
+            if (!source.delete()) {
+                dest.delete()
+                error("重命名失败")
+            }
+        }
+        return newRelative
+    }
+
     companion object {
+        private val ILLEGAL_NAME_CHARS = charArrayOf(':', '*', '?', '"', '<', '>', '|')
         const val IMAGES_DIR_NAME = "images"
         const val DIR_PENDING = "pending"
         const val DIR_CONFIRMED = "confirmed"

@@ -40,7 +40,8 @@ fun ImageEntity.toListItem(): ImageListItem {
         placeholderColorArgb = PLACEHOLDER_COLORS[
             (id.hashCode().and(Int.MAX_VALUE)) % PLACEHOLDER_COLORS.size
         ],
-        status = statusEnum
+        status = statusEnum,
+        filePath = filePath
     )
 }
 

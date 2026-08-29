@@ -69,6 +69,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.exifinterface)
     implementation("androidx.compose.material:material-icons-extended")
     ksp(libs.androidx.room.compiler)
     debugImplementation(libs.androidx.ui.tooling)

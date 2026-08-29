@@ -34,6 +34,7 @@ import com.pictureorganizer.ui.theme.PictureOrganizerTheme
 fun MainScreen(
     viewModel: MainViewModel,
     onNavigateToImport: () -> Unit = {},
+    onNavigateToDetail: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -103,6 +104,7 @@ fun MainScreen(
             onImportClick = { viewModel.onEvent(MainUiEvent.ImportImages) },
             onDeleteClick = { viewModel.onEvent(MainUiEvent.DeleteSelected) },
             onToggleSelect = { viewModel.onEvent(MainUiEvent.ToggleSelect(it)) },
+            onItemClick = onNavigateToDetail,
             modifier = Modifier.padding(innerPadding)
         )
     }

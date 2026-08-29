@@ -28,6 +28,9 @@ interface ImageDao {
     @Query("SELECT * FROM images WHERE id = :id")
     suspend fun findById(id: String): ImageEntity?
 
+    @Query("SELECT * FROM images WHERE id = :id")
+    fun observeById(id: String): Flow<ImageEntity?>
+
     @Query("SELECT * FROM images")
     suspend fun getAll(): List<ImageEntity>
 }

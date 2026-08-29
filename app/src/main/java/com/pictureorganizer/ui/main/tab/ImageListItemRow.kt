@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,12 +26,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
+import com.pictureorganizer.PictureOrganizerApplication
 import com.pictureorganizer.model.ImageListItem
 import com.pictureorganizer.model.ImageStatus
 import com.pictureorganizer.ui.theme.PictureOrganizerTheme
+import java.io.File
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -39,6 +46,7 @@ fun ImageListItemRow(
     isEditMode: Boolean,
     isSelected: Boolean,
     onToggleSelect: () -> Unit,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -46,7 +54,7 @@ fun ImageListItemRow(
             .fillMaxWidth()
             .then(
                 if (isEditMode) Modifier.clickable(onClick = onToggleSelect)
-                else Modifier
+                else Modifier.clickable(onClick = onClick)
             )
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -59,20 +67,12 @@ fun ImageListItemRow(
             )
         }
 
-        Box(
+        Thumbnail(
+            item = item,
             modifier = Modifier
                 .size(72.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color(item.placeholderColorArgb)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Image,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.9f),
-                modifier = Modifier.size(32.dp)
-            )
-        }
+        )
 
         Column(
             modifier = Modifier.weight(1f),
@@ -109,6 +109,61 @@ fun ImageListItemRow(
     }
 }
 
+@Composable
+private fun Thumbnail(
+    item: ImageListItem,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val placeholder = Color(item.placeholderColorArgb)
+    val file = rememberImageFile(item.filePath)
+
+    SubcomposeAsyncImage(
+        model = ImageRequest.Builder(context)
+            .data(file)
+            .crossfade(true)
+            .build(),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = modifier.background(placeholder),
+        loading = {
+            PlaceholderThumb(placeholder)
+        },
+        error = {
+            PlaceholderThumb(placeholder)
+        }
+    )
+}
+
+@Composable
+private fun PlaceholderThumb(color: Color) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Image,
+            contentDescription = null,
+            tint = Color.White.copy(alpha = 0.9f),
+            modifier = Modifier.size(32.dp)
+        )
+    }
+}
+
+@Composable
+private fun rememberImageFile(relativePath: String): File? {
+    val context = LocalContext.current
+    if (relativePath.isBlank()) return null
+    val app = context.applicationContext as? PictureOrganizerApplication
+    return if (app != null) {
+        app.fileManager.absoluteFile(relativePath)
+    } else {
+        null
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun ImageListItemRowPreview() {
@@ -120,7 +175,8 @@ private fun ImageListItemRowPreview() {
                 description = "周末出游照片，待重命名",
                 tags = listOf("待处理", "旅行"),
                 placeholderColorArgb = 0xFFE57373,
-                status = ImageStatus.Pending
+                status = ImageStatus.Pending,
+                filePath = "pending/preview-01.jpg"
             ),
             isEditMode = true,
             isSelected = true,
