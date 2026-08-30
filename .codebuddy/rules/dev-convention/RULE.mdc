@@ -3,7 +3,7 @@ description: AI 全量开发约定，文档先行，以式样书与路由设计�
 globs: **/*
 alwaysApply: true
 enabled: true
-updatedAt: 2026-08-29
+updatedAt: 2026-08-30
 provider: both
 ---
 
@@ -18,8 +18,8 @@ provider: both
 
 ## 默认开发流程（文档先行）
 
-1. **文档**：按 `docs/设计/路由设计.md` 第 4 节新增画面文档，更新路由表与 `docs/式样/项目式样说明书.md` 第 5 章
-2. **代码**：按 `docs/画面/` 实现 Kotlin、注册 route
+1. **文档**：按 `docs/设计/路由设计.md` 第 4 节新增画面目录（复制 `docs/画面/_模板/`），更新路由表与 `docs/式样/项目式样说明书.md` 第 5 章
+2. **代码**：按 `docs/画面/<画面>/` 实现 Kotlin、注册 route
 3. **Review**：用户验收
 
 ## 权威文档
@@ -30,7 +30,7 @@ provider: both
 | `docs/式样/项目式样说明书.md` | 功能、技术栈、版本矩阵 |
 | `docs/设计/架构设计.md` | MVVM、包结构、Room、数据流 |
 | `docs/设计/路由设计.md` | route 命名与导航图 |
-| `docs/画面/` | 各画面详细规格 |
+| `docs/画面/` | 各画面规格（每画面一目录 + 区域文件；见 `docs/画面/README.md`） |
 | `docs/日志/` | 按日开发日志 |
 | `docs/工程/改动清单.md` | 待办 backlog |
 | `shared/prompts/` | 拉入对话执行的提示词模板（功能开发、式样问答、文档整理） |
@@ -38,7 +38,7 @@ provider: both
 ## 强制约定
 
 1. **未确认项**：式样书中标注「待定」的内容，不得擅自假设并实现
-2. **新画面**：先 `docs/画面/xxx.md`，再 `app/src/...`
+2. **新画面**：先 `docs/画面/<画面名>/`（`README.md` + 按需区域文件），再 `app/src/...`
 3. **route 命名**：全小写、多词连字符，见路由设计第 2 节
 4. **依赖变更**：同步更新 `gradle/libs.versions.toml` 与式样书 3.1 版本矩阵
 5. **包结构**：
