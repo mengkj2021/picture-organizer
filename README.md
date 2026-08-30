@@ -11,7 +11,7 @@
 | [docs/式样/项目式样说明书.md](docs/式样/项目式样说明书.md) | 功能、技术栈、页面架构式样 |
 | [docs/设计/架构设计.md](docs/设计/架构设计.md) | MVVM、包结构、Room 设计、数据流 |
 | [docs/设计/路由设计.md](docs/设计/路由设计.md) | Navigation Compose 路由命名与导航图 |
-| [docs/画面/](docs/画面/) | 各画面详细规格 |
+| [docs/画面/](docs/画面/) | 各画面规格（每画面一目录，见 [画面/README.md](docs/画面/README.md)） |
 | [docs/工程/改动清单.md](docs/工程/改动清单.md) | 待办 backlog |
 | [docs/日志/](docs/日志/) | 按日开发日志 |
 | [提交注意事项.md](提交注意事项.md) | Git 账号、编码、提交范围约定 |
