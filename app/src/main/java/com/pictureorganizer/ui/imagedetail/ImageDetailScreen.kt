@@ -26,7 +26,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
@@ -79,6 +82,7 @@ fun ImageDetailScreen(
         factory = ImageDetailViewModel.Factory(
             imageId = imageId,
             repository = app.imageRepository,
+            tagRepository = app.tagRepository,
             fileManager = app.fileManager
         )
     )
@@ -195,31 +199,99 @@ fun ImageDetailScreen(
                         )
                         val userTags = current?.let { ImageListItem.userTagsOf(it.tags) }
                             .orEmpty()
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            userTags.forEachIndexed { index, tag ->
-                                InputChip(
-                                    selected = state.editingUserTagIndex == index,
-                                    onClick = {
-                                        viewModel.onEvent(ImageDetailUiEvent.StartEditTag(index))
-                                    },
-                                    label = { Text(tag) },
-                                    trailingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.Close,
-                                            contentDescription = stringResource(R.string.detail_tag_delete),
-                                            modifier = Modifier
-                                                .size(18.dp)
-                                                .clickable {
-                                                    viewModel.onEvent(
-                                                        ImageDetailUiEvent.DeleteTag(index)
+                        val libraryNames = state.libraryTags.map { it.name }.toSet()
+                        if (state.libraryTags.isNotEmpty()) {
+                            Text(
+                                text = stringResource(R.string.detail_tag_library),
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                state.libraryTags.forEach { tag ->
+                                    FilterChip(
+                                        selected = tag.name in userTags,
+                                        onClick = {
+                                            viewModel.onEvent(
+                                                ImageDetailUiEvent.ToggleLibraryTag(tag.name)
+                                            )
+                                        },
+                                        enabled = !state.isBusy,
+                                        label = { Text(tag.name) }
+                                    )
+                                }
+                            }
+                        }
+                        val customTags = userTags.withIndex()
+                            .filter { (_, name) -> name !in libraryNames }
+                        if (customTags.isNotEmpty()) {
+                            Text(
+                                text = stringResource(R.string.detail_tag_custom),
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                customTags.forEach { (index, tag) ->
+                                    InputChip(
+                                        selected = state.editingUserTagIndex == index,
+                                        onClick = {
+                                            viewModel.onEvent(ImageDetailUiEvent.StartEditTag(index))
+                                        },
+                                        label = { Text(tag) },
+                                        trailingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = stringResource(R.string.detail_tag_delete),
+                                                modifier = Modifier
+                                                    .size(18.dp)
+                                                    .clickable {
+                                                        viewModel.onEvent(
+                                                            ImageDetailUiEvent.DeleteTag(index)
+                                                        )
+                                                    }
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        var templateMenuExpanded by remember { mutableStateOf(false) }
+                        Box {
+                            OutlinedButton(
+                                onClick = { templateMenuExpanded = true },
+                                enabled = !state.isBusy && state.templates.isNotEmpty()
+                            ) {
+                                Text(stringResource(R.string.detail_apply_template))
+                            }
+                            DropdownMenu(
+                                expanded = templateMenuExpanded,
+                                onDismissRequest = { templateMenuExpanded = false }
+                            ) {
+                                state.templates.forEach { template ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                if (template.isDefault) {
+                                                    stringResource(
+                                                        R.string.detail_template_default_fmt,
+                                                        template.name
                                                     )
+                                                } else {
+                                                    template.name
                                                 }
-                                        )
-                                    }
-                                )
+                                            )
+                                        },
+                                        onClick = {
+                                            templateMenuExpanded = false
+                                            viewModel.onEvent(
+                                                ImageDetailUiEvent.ApplyTemplate(template.id)
+                                            )
+                                        }
+                                    )
+                                }
                             }
                         }
                         Row(

@@ -3,6 +3,7 @@ package com.pictureorganizer
 import android.app.Application
 import com.pictureorganizer.data.local.AppDatabase
 import com.pictureorganizer.data.repository.RoomImageRepository
+import com.pictureorganizer.data.repository.RoomTagRepository
 import com.pictureorganizer.util.file.AppFileManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +20,10 @@ class PictureOrganizerApplication : Application() {
 
     val imageRepository: RoomImageRepository by lazy {
         RoomImageRepository(database.imageDao(), fileManager)
+    }
+
+    val tagRepository: RoomTagRepository by lazy {
+        RoomTagRepository(database.tagDao(), database.tagTemplateDao())
     }
 
     override fun onCreate() {

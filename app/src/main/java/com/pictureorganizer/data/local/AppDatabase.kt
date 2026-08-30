@@ -7,18 +7,23 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.pictureorganizer.data.local.converter.Converters
 import com.pictureorganizer.data.local.dao.ImageDao
+import com.pictureorganizer.data.local.dao.TagDao
+import com.pictureorganizer.data.local.dao.TagTemplateDao
 import com.pictureorganizer.data.local.entity.ImageEntity
+import com.pictureorganizer.data.local.entity.TagEntity
+import com.pictureorganizer.data.local.entity.TagTemplateEntity
 
 @Database(
-    entities = [ImageEntity::class],
-    version = 1,
-    // 开启 schema 导出（构建时生成至 app/schemas/），为后续 Migration v2 提供基线
+    entities = [ImageEntity::class, TagEntity::class, TagTemplateEntity::class],
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun imageDao(): ImageDao
+    abstract fun tagDao(): TagDao
+    abstract fun tagTemplateDao(): TagTemplateDao
 
     companion object {
         private const val DATABASE_NAME = "picture_organizer.db"
@@ -28,7 +33,9 @@ abstract class AppDatabase : RoomDatabase() {
                 context.applicationContext,
                 AppDatabase::class.java,
                 DATABASE_NAME
-            ).build()
+            )
+                .addMigrations(MIGRATION_1_2)
+                .build()
         }
     }
 }

@@ -13,7 +13,9 @@ import com.pictureorganizer.ui.imagedetail.ImageDetailScreen
 import com.pictureorganizer.ui.importimages.ImportScreen
 import com.pictureorganizer.ui.main.MainScreen
 import com.pictureorganizer.ui.main.MainViewModel
+import com.pictureorganizer.ui.settings.SettingsScreen
 import com.pictureorganizer.ui.splash.SplashScreen
+import com.pictureorganizer.ui.tagmanage.TagManageScreen
 
 @Composable
 fun PictureOrganizerNavHost() {
@@ -45,6 +47,9 @@ fun PictureOrganizerNavHost() {
                 },
                 onNavigateToDetail = { imageId ->
                     navController.navigate(Routes.imageDetail(imageId))
+                },
+                onNavigateToSettings = {
+                    navController.navigate(Routes.SETTINGS)
                 }
             )
         }
@@ -61,6 +66,19 @@ fun PictureOrganizerNavHost() {
             val imageId = entry.arguments?.getString("imageId").orEmpty()
             ImageDetailScreen(
                 imageId = imageId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateToTagManage = {
+                    navController.navigate(Routes.TAG_MANAGE)
+                }
+            )
+        }
+        composable(Routes.TAG_MANAGE) {
+            TagManageScreen(
                 onBack = { navController.popBackStack() }
             )
         }

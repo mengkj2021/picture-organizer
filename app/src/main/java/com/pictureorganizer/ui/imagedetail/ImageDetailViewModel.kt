@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pictureorganizer.R
 import com.pictureorganizer.data.repository.ImageRepository
+import com.pictureorganizer.data.repository.TagRepository
 import com.pictureorganizer.model.ImageListItem
 import com.pictureorganizer.util.file.AppFileManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,6 +26,7 @@ import java.io.File
 class ImageDetailViewModel(
     initialImageId: String,
     private val repository: ImageRepository,
+    private val tagRepository: TagRepository,
     private val fileManager: AppFileManager
 ) : ViewModel() {
 
@@ -44,13 +46,22 @@ class ImageDetailViewModel(
         else repository.observeItems(item.status)
     }
 
-    val uiState: StateFlow<ImageDetailUiState> = combine(
+    private val imageBundle = combine(
         currentId,
         currentItemFlow,
-        siblingsFlow,
+        siblingsFlow
+    ) { id, item, siblings ->
+        Triple(id, item, siblings)
+    }
+
+    val uiState: StateFlow<ImageDetailUiState> = combine(
+        imageBundle,
         editor,
-        busy
-    ) { id, item, siblings, ed, isBusy ->
+        busy,
+        tagRepository.observeTags(),
+        tagRepository.observeTemplates()
+    ) { bundle, ed, isBusy, libraryTags, templates ->
+        val (id, item, siblings) = bundle
         ImageDetailUiState(
             currentId = id,
             current = item,
@@ -59,6 +70,8 @@ class ImageDetailViewModel(
                 ?: (item?.fileNameFromPath() ?: item?.description.orEmpty()),
             tagDraft = ed.tagDraft,
             editingUserTagIndex = ed.editingUserTagIndex,
+            libraryTags = libraryTags,
+            templates = templates,
             isBusy = isBusy,
             notFound = item == null
         )
@@ -87,6 +100,8 @@ class ImageDetailViewModel(
             }
             ImageDetailUiEvent.SaveTag -> saveTag()
             is ImageDetailUiEvent.DeleteTag -> deleteTag(event.userTagIndex)
+            is ImageDetailUiEvent.ToggleLibraryTag -> toggleLibraryTag(event.name)
+            is ImageDetailUiEvent.ApplyTemplate -> applyTemplate(event.templateId)
         }
     }
 
@@ -173,6 +188,41 @@ class ImageDetailViewModel(
         persistTags(item, userTags, clearEditor = true)
     }
 
+    private fun toggleLibraryTag(name: String) {
+        val item = uiState.value.current ?: return
+        val trimmed = name.trim()
+        if (trimmed.isEmpty() || trimmed in ImageListItem.STATUS_TAGS) return
+        val userTags = ImageListItem.userTagsOf(item.tags).toMutableList()
+        if (trimmed in userTags) {
+            userTags.removeAll { it == trimmed }
+        } else {
+            userTags.add(trimmed)
+        }
+        persistTags(item, userTags, clearEditor = false)
+    }
+
+    private fun applyTemplate(templateId: String) {
+        val item = uiState.value.current ?: return
+        val template = uiState.value.templates.find { it.id == templateId } ?: return
+        val userTags = ImageListItem.userTagsOf(item.tags).toMutableList()
+        var changed = false
+        template.tagNames.forEach { raw ->
+            val name = raw.trim()
+            if (name.isEmpty() || name in ImageListItem.STATUS_TAGS) return@forEach
+            if (name !in userTags) {
+                userTags.add(name)
+                changed = true
+            }
+        }
+        if (!changed) {
+            viewModelScope.launch {
+                _effects.send(ImageDetailUiEffect.ShowMessage(R.string.detail_template_no_change))
+            }
+            return
+        }
+        persistTags(item, userTags, clearEditor = false)
+    }
+
     private fun persistTags(
         item: ImageListItem,
         userTags: List<String>,
@@ -214,11 +264,17 @@ class ImageDetailViewModel(
     class Factory(
         private val imageId: String,
         private val repository: ImageRepository,
+        private val tagRepository: TagRepository,
         private val fileManager: AppFileManager
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return ImageDetailViewModel(imageId, repository, fileManager) as T
+            return ImageDetailViewModel(
+                imageId,
+                repository,
+                tagRepository,
+                fileManager
+            ) as T
         }
     }
 }
