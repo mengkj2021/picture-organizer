@@ -5,9 +5,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pictureorganizer.R
 import com.pictureorganizer.data.repository.ImageRepository
+import com.pictureorganizer.data.repository.RenameTemplateRepository
 import com.pictureorganizer.data.repository.TagRepository
 import com.pictureorganizer.model.ImageListItem
 import com.pictureorganizer.util.file.AppFileManager
+import com.pictureorganizer.util.file.RenamePatternApplier
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,9 +29,9 @@ class ImageDetailViewModel(
     initialImageId: String,
     private val repository: ImageRepository,
     private val tagRepository: TagRepository,
-    private val fileManager: AppFileManager
+    private val renameTemplateRepository: RenameTemplateRepository,
+    private val fileManager: AppFileManager,
 ) : ViewModel() {
-
     private val currentId = MutableStateFlow(initialImageId)
     private val editor = MutableStateFlow(EditorState())
     private val busy = MutableStateFlow(false)
@@ -37,71 +39,92 @@ class ImageDetailViewModel(
     private val _effects = Channel<ImageDetailUiEffect>(Channel.BUFFERED)
     val effects = _effects.receiveAsFlow()
 
-    private val currentItemFlow = currentId.flatMapLatest { id ->
-        repository.observeItem(id)
-    }
+    private val currentItemFlow =
+        currentId.flatMapLatest { id ->
+            repository.observeItem(id)
+        }
 
-    private val siblingsFlow = currentItemFlow.flatMapLatest { item ->
-        if (item == null) flowOf(emptyList())
-        else repository.observeItems(item.status)
-    }
+    private val siblingsFlow =
+        currentItemFlow.flatMapLatest { item ->
+            if (item == null) {
+                flowOf(emptyList())
+            } else {
+                repository.observeItems(item.status)
+            }
+        }
 
-    private val imageBundle = combine(
-        currentId,
-        currentItemFlow,
-        siblingsFlow
-    ) { id, item, siblings ->
-        Triple(id, item, siblings)
-    }
+    private val imageBundle =
+        combine(
+            currentId,
+            currentItemFlow,
+            siblingsFlow,
+        ) { id, item, siblings ->
+            Triple(id, item, siblings)
+        }
 
-    val uiState: StateFlow<ImageDetailUiState> = combine(
-        imageBundle,
-        editor,
-        busy,
-        tagRepository.observeTags(),
-        tagRepository.observeTemplates()
-    ) { bundle, ed, isBusy, libraryTags, templates ->
-        val (id, item, siblings) = bundle
-        ImageDetailUiState(
-            currentId = id,
-            current = item,
-            siblings = siblings,
-            renameDraft = ed.renameDraft.takeIf { ed.renameTouched }
-                ?: (item?.fileNameFromPath() ?: item?.description.orEmpty()),
-            tagDraft = ed.tagDraft,
-            editingUserTagIndex = ed.editingUserTagIndex,
-            libraryTags = libraryTags,
-            templates = templates,
-            isBusy = isBusy,
-            notFound = item == null
+    private val tagsAndTemplates =
+        combine(
+            tagRepository.observeTags(),
+            tagRepository.observeTemplates(),
+            renameTemplateRepository.observeAll(),
+        ) { libraryTags, templates, renameTemplates ->
+            Triple(libraryTags, templates, renameTemplates)
+        }
+
+    val uiState: StateFlow<ImageDetailUiState> =
+        combine(
+            imageBundle,
+            editor,
+            busy,
+            tagsAndTemplates,
+        ) { bundle, ed, isBusy, tagBundle ->
+            val (id, item, siblings) = bundle
+            val (libraryTags, templates, renameTemplates) = tagBundle
+            ImageDetailUiState(
+                currentId = id,
+                current = item,
+                siblings = siblings,
+                renameDraft =
+                    ed.renameDraft.takeIf { ed.renameTouched }
+                        ?: (item?.fileNameFromPath() ?: item?.description.orEmpty()),
+                tagDraft = ed.tagDraft,
+                editingUserTagIndex = ed.editingUserTagIndex,
+                libraryTags = libraryTags,
+                templates = templates,
+                renameTemplates = renameTemplates,
+                isBusy = isBusy,
+                notFound = item == null,
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = ImageDetailUiState(currentId = initialImageId),
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = ImageDetailUiState(currentId = initialImageId)
-    )
 
-    fun absoluteFile(item: ImageListItem): File =
-        fileManager.absoluteFile(item.filePath)
+    fun absoluteFile(item: ImageListItem): File = fileManager.absoluteFile(item.filePath)
 
     fun onEvent(event: ImageDetailUiEvent) {
         when (event) {
             is ImageDetailUiEvent.SelectSibling -> selectSibling(event.id)
-            is ImageDetailUiEvent.RenameDraftChanged -> editor.update {
-                it.copy(renameDraft = event.value, renameTouched = true)
-            }
+            is ImageDetailUiEvent.RenameDraftChanged ->
+                editor.update {
+                    it.copy(renameDraft = event.value, renameTouched = true)
+                }
             ImageDetailUiEvent.SaveRename -> saveRename()
-            is ImageDetailUiEvent.TagDraftChanged -> editor.update {
-                it.copy(tagDraft = event.value)
-            }
+            is ImageDetailUiEvent.TagDraftChanged ->
+                editor.update {
+                    it.copy(tagDraft = event.value)
+                }
             is ImageDetailUiEvent.StartEditTag -> startEditTag(event.userTagIndex)
-            ImageDetailUiEvent.CancelEditTag -> editor.update {
-                it.copy(tagDraft = "", editingUserTagIndex = null)
-            }
+            ImageDetailUiEvent.CancelEditTag ->
+                editor.update {
+                    it.copy(tagDraft = "", editingUserTagIndex = null)
+                }
             ImageDetailUiEvent.SaveTag -> saveTag()
             is ImageDetailUiEvent.DeleteTag -> deleteTag(event.userTagIndex)
             is ImageDetailUiEvent.ToggleLibraryTag -> toggleLibraryTag(event.name)
             is ImageDetailUiEvent.ApplyTemplate -> applyTemplate(event.templateId)
+            is ImageDetailUiEvent.ApplyRenameTemplate -> applyRenameTemplate(event.templateId)
         }
     }
 
@@ -122,8 +145,10 @@ class ImageDetailViewModel(
 
     private fun saveRename() {
         val id = currentId.value
-        val name = editor.value.renameDraft.trim()
-            .ifEmpty { uiState.value.renameDraft.trim() }
+        val name =
+            editor.value.renameDraft
+                .trim()
+                .ifEmpty { uiState.value.renameDraft.trim() }
         if (name.isEmpty()) {
             viewModelScope.launch {
                 _effects.send(ImageDetailUiEffect.ShowMessage(R.string.detail_rename_empty))
@@ -136,12 +161,11 @@ class ImageDetailViewModel(
                 .onSuccess {
                     editor.update { it.copy(renameTouched = false) }
                     _effects.send(ImageDetailUiEffect.ShowMessage(R.string.detail_rename_ok))
-                }
-                .onFailure { e ->
+                }.onFailure { e ->
                     _effects.send(
                         ImageDetailUiEffect.ShowMessageText(
-                            e.message ?: "重命名失败"
-                        )
+                            e.message ?: "重命名失败",
+                        ),
                     )
                 }
             busy.value = false
@@ -223,10 +247,34 @@ class ImageDetailViewModel(
         persistTags(item, userTags, clearEditor = false)
     }
 
+    private fun applyRenameTemplate(templateId: String) {
+        val item = uiState.value.current ?: return
+        val template = uiState.value.renameTemplates.find { it.id == templateId } ?: return
+        val currentName =
+            uiState.value.renameDraft.ifBlank {
+                item.fileNameFromPath().ifBlank { item.description }
+            }
+        val next = RenamePatternApplier.applyForItem(template.pattern, item, currentName)
+        editor.update { it.copy(renameDraft = next, renameTouched = true) }
+        viewModelScope.launch {
+            busy.value = true
+            runCatching { repository.rename(item.id, next) }
+                .onSuccess {
+                    editor.update { it.copy(renameTouched = false) }
+                    _effects.send(ImageDetailUiEffect.ShowMessage(R.string.detail_rename_ok))
+                }.onFailure { e ->
+                    _effects.send(
+                        ImageDetailUiEffect.ShowMessageText(e.message ?: "重命名失败"),
+                    )
+                }
+            busy.value = false
+        }
+    }
+
     private fun persistTags(
         item: ImageListItem,
         userTags: List<String>,
-        clearEditor: Boolean
+        clearEditor: Boolean,
     ) {
         val fullTags = listOf(ImageListItem.statusTagFor(item.status)) + userTags
         viewModelScope.launch {
@@ -234,20 +282,20 @@ class ImageDetailViewModel(
             runCatching { repository.updateTags(item.id, fullTags) }
                 .onSuccess { exifOk ->
                     if (clearEditor) {
-                        editor.value = EditorState(
-                            renameDraft = editor.value.renameDraft,
-                            renameTouched = editor.value.renameTouched
-                        )
+                        editor.value =
+                            EditorState(
+                                renameDraft = editor.value.renameDraft,
+                                renameTouched = editor.value.renameTouched,
+                            )
                     }
                     if (exifOk) {
                         _effects.send(ImageDetailUiEffect.ShowMessage(R.string.detail_tags_ok))
                     } else {
                         _effects.send(ImageDetailUiEffect.ShowMessage(R.string.detail_exif_warn))
                     }
-                }
-                .onFailure { e ->
+                }.onFailure { e ->
                     _effects.send(
-                        ImageDetailUiEffect.ShowMessageText(e.message ?: "标签保存失败")
+                        ImageDetailUiEffect.ShowMessageText(e.message ?: "标签保存失败"),
                     )
                 }
             busy.value = false
@@ -258,24 +306,25 @@ class ImageDetailViewModel(
         val renameDraft: String = "",
         val renameTouched: Boolean = false,
         val tagDraft: String = "",
-        val editingUserTagIndex: Int? = null
+        val editingUserTagIndex: Int? = null,
     )
 
     class Factory(
         private val imageId: String,
         private val repository: ImageRepository,
         private val tagRepository: TagRepository,
-        private val fileManager: AppFileManager
+        private val renameTemplateRepository: RenameTemplateRepository,
+        private val fileManager: AppFileManager,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return ImageDetailViewModel(
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            ImageDetailViewModel(
                 imageId,
                 repository,
                 tagRepository,
-                fileManager
+                renameTemplateRepository,
+                fileManager,
             ) as T
-        }
     }
 }
 

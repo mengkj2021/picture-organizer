@@ -6,11 +6,11 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "tags",
-    indices = [Index(value = ["name"], unique = true)]
+    indices = [Index(value = ["name"], unique = true)],
 )
 data class TagEntity(
     @PrimaryKey val id: String,
     val name: String,
     val sortOrder: Int,
-    val createdAt: Long
+    val createdAt: Long,
 )

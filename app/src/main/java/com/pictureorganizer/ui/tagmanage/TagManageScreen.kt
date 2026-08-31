@@ -56,13 +56,14 @@ import com.pictureorganizer.model.TagTemplate
 @Composable
 fun TagManageScreen(
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as PictureOrganizerApplication
-    val viewModel: TagManageViewModel = viewModel(
-        factory = TagManageViewModel.Factory(app.tagRepository)
-    )
+    val viewModel: TagManageViewModel =
+        viewModel(
+            factory = TagManageViewModel.Factory(app.tagRepository),
+        )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -89,10 +90,10 @@ fun TagManageScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back)
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
-                }
+                },
             )
         },
         floatingActionButton = {
@@ -102,43 +103,46 @@ fun TagManageScreen(
                         TagManageTab.Tags -> viewModel.onEvent(TagManageUiEvent.OpenAddTag)
                         TagManageTab.Templates -> viewModel.onEvent(TagManageUiEvent.OpenAddTemplate)
                     }
-                }
+                },
             ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_add))
             }
-        }
+        },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             PrimaryTabRow(selectedTabIndex = state.selectedTab.ordinal) {
                 Tab(
                     selected = state.selectedTab == TagManageTab.Tags,
                     onClick = { viewModel.onEvent(TagManageUiEvent.SelectTab(TagManageTab.Tags)) },
-                    text = { Text(stringResource(R.string.tag_manage_tab_tags)) }
+                    text = { Text(stringResource(R.string.tag_manage_tab_tags)) },
                 )
                 Tab(
                     selected = state.selectedTab == TagManageTab.Templates,
                     onClick = {
                         viewModel.onEvent(TagManageUiEvent.SelectTab(TagManageTab.Templates))
                     },
-                    text = { Text(stringResource(R.string.tag_manage_tab_templates)) }
+                    text = { Text(stringResource(R.string.tag_manage_tab_templates)) },
                 )
             }
             when (state.selectedTab) {
-                TagManageTab.Tags -> TagsList(
-                    tags = state.tags,
-                    onEdit = { viewModel.onEvent(TagManageUiEvent.OpenEditTag(it)) },
-                    onDelete = { viewModel.onEvent(TagManageUiEvent.RequestDeleteTag(it.id)) }
-                )
-                TagManageTab.Templates -> TemplatesList(
-                    templates = state.templates,
-                    onEdit = { viewModel.onEvent(TagManageUiEvent.OpenEditTemplate(it)) },
-                    onDelete = { viewModel.onEvent(TagManageUiEvent.RequestDeleteTemplate(it.id)) },
-                    onSetDefault = { viewModel.onEvent(TagManageUiEvent.SetDefaultTemplate(it.id)) }
-                )
+                TagManageTab.Tags ->
+                    TagsList(
+                        tags = state.tags,
+                        onEdit = { viewModel.onEvent(TagManageUiEvent.OpenEditTag(it)) },
+                        onDelete = { viewModel.onEvent(TagManageUiEvent.RequestDeleteTag(it.id)) },
+                    )
+                TagManageTab.Templates ->
+                    TemplatesList(
+                        templates = state.templates,
+                        onEdit = { viewModel.onEvent(TagManageUiEvent.OpenEditTemplate(it)) },
+                        onDelete = { viewModel.onEvent(TagManageUiEvent.RequestDeleteTemplate(it.id)) },
+                        onSetDefault = { viewModel.onEvent(TagManageUiEvent.SetDefaultTemplate(it.id)) },
+                    )
             }
         }
     }
@@ -149,7 +153,7 @@ fun TagManageScreen(
             isBusy = state.isBusy,
             onNameChanged = { viewModel.onEvent(TagManageUiEvent.TagNameChanged(it)) },
             onSave = { viewModel.onEvent(TagManageUiEvent.SaveTag) },
-            onDismiss = { viewModel.onEvent(TagManageUiEvent.DismissTagDialog) }
+            onDismiss = { viewModel.onEvent(TagManageUiEvent.DismissTagDialog) },
         )
     }
 
@@ -162,7 +166,7 @@ fun TagManageScreen(
             onToggleTag = { viewModel.onEvent(TagManageUiEvent.ToggleTemplateTag(it)) },
             onDefaultChanged = { viewModel.onEvent(TagManageUiEvent.TemplateDefaultChanged(it)) },
             onSave = { viewModel.onEvent(TagManageUiEvent.SaveTemplate) },
-            onDismiss = { viewModel.onEvent(TagManageUiEvent.DismissTemplateDialog) }
+            onDismiss = { viewModel.onEvent(TagManageUiEvent.DismissTemplateDialog) },
         )
     }
 
@@ -170,7 +174,7 @@ fun TagManageScreen(
         ConfirmDeleteDialog(
             message = stringResource(R.string.tag_manage_confirm_delete_tag),
             onConfirm = { viewModel.onEvent(TagManageUiEvent.ConfirmDeleteTag) },
-            onDismiss = { viewModel.onEvent(TagManageUiEvent.CancelDeleteTag) }
+            onDismiss = { viewModel.onEvent(TagManageUiEvent.CancelDeleteTag) },
         )
     }
 
@@ -178,7 +182,7 @@ fun TagManageScreen(
         ConfirmDeleteDialog(
             message = stringResource(R.string.tag_manage_confirm_delete_template),
             onConfirm = { viewModel.onEvent(TagManageUiEvent.ConfirmDeleteTemplate) },
-            onDismiss = { viewModel.onEvent(TagManageUiEvent.CancelDeleteTemplate) }
+            onDismiss = { viewModel.onEvent(TagManageUiEvent.CancelDeleteTemplate) },
         )
     }
 }
@@ -187,13 +191,13 @@ fun TagManageScreen(
 private fun TagsList(
     tags: List<Tag>,
     onEdit: (Tag) -> Unit,
-    onDelete: (Tag) -> Unit
+    onDelete: (Tag) -> Unit,
 ) {
     if (tags.isEmpty()) {
         Text(
             text = stringResource(R.string.tag_manage_empty_tags),
             modifier = Modifier.padding(16.dp),
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
         )
         return
     }
@@ -211,7 +215,7 @@ private fun TagsList(
                         }
                     }
                 },
-                modifier = Modifier.clickable { onEdit(tag) }
+                modifier = Modifier.clickable { onEdit(tag) },
             )
         }
     }
@@ -222,13 +226,13 @@ private fun TemplatesList(
     templates: List<TagTemplate>,
     onEdit: (TagTemplate) -> Unit,
     onDelete: (TagTemplate) -> Unit,
-    onSetDefault: (TagTemplate) -> Unit
+    onSetDefault: (TagTemplate) -> Unit,
 ) {
     if (templates.isEmpty()) {
         Text(
             text = stringResource(R.string.tag_manage_empty_templates),
             modifier = Modifier.padding(16.dp),
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
         )
         return
     }
@@ -237,17 +241,18 @@ private fun TemplatesList(
             ListItem(
                 headlineContent = { Text(template.name) },
                 supportingContent = {
-                    val tagsText = if (template.tagNames.isEmpty()) {
-                        stringResource(R.string.tag_manage_template_no_tags)
-                    } else {
-                        template.tagNames.joinToString(" · ")
-                    }
+                    val tagsText =
+                        if (template.tagNames.isEmpty()) {
+                            stringResource(R.string.tag_manage_template_no_tags)
+                        } else {
+                            template.tagNames.joinToString(" · ")
+                        }
                     Text(
                         if (template.isDefault) {
                             stringResource(R.string.tag_manage_default_badge) + " · " + tagsText
                         } else {
                             tagsText
-                        }
+                        },
                     )
                 },
                 trailingContent = {
@@ -256,7 +261,7 @@ private fun TemplatesList(
                             IconButton(onClick = { onSetDefault(template) }) {
                                 Icon(
                                     Icons.Default.Star,
-                                    contentDescription = stringResource(R.string.tag_manage_set_default)
+                                    contentDescription = stringResource(R.string.tag_manage_set_default),
                                 )
                             }
                         }
@@ -268,7 +273,7 @@ private fun TemplatesList(
                         }
                     }
                 },
-                modifier = Modifier.clickable { onEdit(template) }
+                modifier = Modifier.clickable { onEdit(template) },
             )
         }
     }
@@ -280,13 +285,14 @@ private fun TagEditDialog(
     isBusy: Boolean,
     onNameChanged: (String) -> Unit,
     onSave: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
-    val title = if (dialog.editingId == null) {
-        stringResource(R.string.tag_manage_add_tag)
-    } else {
-        stringResource(R.string.tag_manage_edit_tag)
-    }
+    val title =
+        if (dialog.editingId == null) {
+            stringResource(R.string.tag_manage_add_tag)
+        } else {
+            stringResource(R.string.tag_manage_edit_tag)
+        }
     AlertDialog(
         onDismissRequest = { if (!isBusy) onDismiss() },
         title = { Text(title) },
@@ -297,7 +303,7 @@ private fun TagEditDialog(
                 label = { Text(stringResource(R.string.tag_manage_name_label)) },
                 singleLine = true,
                 enabled = !isBusy,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         },
         confirmButton = {
@@ -309,7 +315,7 @@ private fun TagEditDialog(
             TextButton(onClick = onDismiss, enabled = !isBusy) {
                 Text(stringResource(R.string.detail_tag_cancel))
             }
-        }
+        },
     )
 }
 
@@ -323,20 +329,21 @@ private fun TemplateEditDialog(
     onToggleTag: (String) -> Unit,
     onDefaultChanged: (Boolean) -> Unit,
     onSave: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
-    val title = if (dialog.editingId == null) {
-        stringResource(R.string.tag_manage_add_template)
-    } else {
-        stringResource(R.string.tag_manage_edit_template)
-    }
+    val title =
+        if (dialog.editingId == null) {
+            stringResource(R.string.tag_manage_add_template)
+        } else {
+            stringResource(R.string.tag_manage_edit_template)
+        }
     AlertDialog(
         onDismissRequest = { if (!isBusy) onDismiss() },
         title = { Text(title) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 OutlinedTextField(
                     value = dialog.name,
@@ -344,7 +351,7 @@ private fun TemplateEditDialog(
                     label = { Text(stringResource(R.string.tag_manage_name_label)) },
                     singleLine = true,
                     enabled = !isBusy,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.tag_manage_as_default)) },
@@ -352,30 +359,30 @@ private fun TemplateEditDialog(
                         Checkbox(
                             checked = dialog.isDefault,
                             onCheckedChange = onDefaultChanged,
-                            enabled = !isBusy
+                            enabled = !isBusy,
                         )
-                    }
+                    },
                 )
                 Text(
                     text = stringResource(R.string.tag_manage_pick_tags),
-                    style = MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.labelLarge,
                 )
                 if (availableTags.isEmpty()) {
                     Text(
                         text = stringResource(R.string.tag_manage_empty_tags),
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 } else {
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         availableTags.forEach { tag ->
                             FilterChip(
                                 selected = tag.name in dialog.selectedTagNames,
                                 onClick = { onToggleTag(tag.name) },
                                 enabled = !isBusy,
-                                label = { Text(tag.name) }
+                                label = { Text(tag.name) },
                             )
                         }
                     }
@@ -391,7 +398,7 @@ private fun TemplateEditDialog(
             TextButton(onClick = onDismiss, enabled = !isBusy) {
                 Text(stringResource(R.string.detail_tag_cancel))
             }
-        }
+        },
     )
 }
 
@@ -399,7 +406,7 @@ private fun TemplateEditDialog(
 private fun ConfirmDeleteDialog(
     message: String,
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -414,6 +421,6 @@ private fun ConfirmDeleteDialog(
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.detail_tag_cancel))
             }
-        }
+        },
     )
 }

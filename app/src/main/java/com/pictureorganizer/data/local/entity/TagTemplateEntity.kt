@@ -10,5 +10,5 @@ data class TagTemplateEntity(
     val tagNamesJson: String,
     val isDefault: Boolean,
     val sortOrder: Int,
-    val createdAt: Long
+    val createdAt: Long,
 )

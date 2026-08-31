@@ -4,7 +4,6 @@ import androidx.room.TypeConverter
 import org.json.JSONArray
 
 class Converters {
-
     @TypeConverter
     fun fromTagsJson(json: String): List<String> {
         if (json.isBlank()) return emptyList()

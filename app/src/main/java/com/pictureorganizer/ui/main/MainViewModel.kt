@@ -4,43 +4,72 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pictureorganizer.data.repository.ImageRepository
+import com.pictureorganizer.data.repository.TagRepository
+import com.pictureorganizer.model.ImageListItem
 import com.pictureorganizer.model.ImageStatus
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.math.max
 
 class MainViewModel(
-    private val repository: ImageRepository
+    private val repository: ImageRepository,
+    private val tagRepository: TagRepository,
 ) : ViewModel() {
-
     private val _effects = Channel<MainUiEffect>(Channel.BUFFERED)
     val effects = _effects.receiveAsFlow()
 
-    private val editState = kotlinx.coroutines.flow.MutableStateFlow(EditUiState())
+    private val listUiState = MutableStateFlow(ListUiState())
 
-    val uiState: StateFlow<MainUiState> = combine(
-        repository.observeItems(ImageStatus.Pending),
-        repository.observeItems(ImageStatus.Confirmed),
-        repository.observeItems(ImageStatus.NoModify),
-        editState
-    ) { pending, confirmed, noModify, edit ->
-        MainUiState(
-            selectedTab = edit.selectedTab,
-            isEditMode = edit.isEditMode,
-            selectedIds = edit.selectedIds,
-            pendingItems = pending,
-            confirmedItems = confirmed,
-            noModifyItems = noModify
+    val uiState: StateFlow<MainUiState> =
+        combine(
+            repository.observeItems(ImageStatus.Pending),
+            repository.observeItems(ImageStatus.Confirmed),
+            repository.observeItems(ImageStatus.NoModify),
+            tagRepository.observeTags(),
+            listUiState,
+        ) { pending, confirmed, noModify, tags, ui ->
+            val tabFilter = ui.filterFor(ui.selectedTab)
+            val source =
+                when (ui.selectedTab) {
+                    MainTab.Pending -> pending
+                    MainTab.Confirmed -> confirmed
+                    MainTab.NoModify -> noModify
+                }
+            val filtered =
+                source.filter {
+                    matchesTagFilter(it, tabFilter.selectedTagNames, tabFilter.includeUntagged)
+                }
+            val totalCount = filtered.size
+            val totalPages = max(1, (totalCount + MAIN_PAGE_SIZE - 1) / MAIN_PAGE_SIZE)
+            val pageIndex = tabFilter.pageIndex.coerceIn(0, totalPages - 1)
+            val pageItems =
+                filtered
+                    .drop(pageIndex * MAIN_PAGE_SIZE)
+                    .take(MAIN_PAGE_SIZE)
+
+            MainUiState(
+                selectedTab = ui.selectedTab,
+                isEditMode = ui.isEditMode,
+                selectedIds = ui.selectedIds,
+                availableTags = tags.map { it.name },
+                selectedTagNames = tabFilter.selectedTagNames,
+                includeUntagged = tabFilter.includeUntagged,
+                pageItems = pageItems,
+                pageIndex = pageIndex,
+                totalCount = totalCount,
+                totalPages = totalPages,
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = MainUiState(),
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = MainUiState()
-    )
 
     fun onEvent(event: MainUiEvent) {
         when (event) {
@@ -51,43 +80,84 @@ class MainViewModel(
             is MainUiEvent.MoveSelectedTo -> moveSelectedTo(event.status)
             MainUiEvent.ImportImages -> navigateToImport()
             MainUiEvent.DeleteSelected -> deleteSelected()
+            is MainUiEvent.SetTagFilter -> setTagFilter(event.selectedTagNames, event.includeUntagged)
+            MainUiEvent.ClearTagFilter -> clearTagFilter()
+            MainUiEvent.PrevPage -> changePage(-1)
+            MainUiEvent.NextPage -> changePage(1)
         }
     }
 
     private fun selectTab(tab: MainTab) {
-        editState.value = editState.value.copy(
-            selectedTab = tab,
-            isEditMode = false,
-            selectedIds = emptySet()
-        )
+        listUiState.value =
+            listUiState.value.copy(
+                selectedTab = tab,
+                isEditMode = false,
+                selectedIds = emptySet(),
+            )
     }
 
     private fun toggleEditMode() {
-        val current = editState.value
-        editState.value = if (current.isEditMode) {
-            current.copy(isEditMode = false, selectedIds = emptySet())
-        } else {
-            current.copy(isEditMode = true)
-        }
+        val current = listUiState.value
+        listUiState.value =
+            if (current.isEditMode) {
+                current.copy(isEditMode = false, selectedIds = emptySet())
+            } else {
+                current.copy(isEditMode = true)
+            }
     }
 
     private fun selectAll() {
         val state = uiState.value
         if (!state.isEditMode) return
-        editState.value = editState.value.copy(
-            selectedIds = state.itemsForTab(state.selectedTab).map { it.id }.toSet()
-        )
+        listUiState.value =
+            listUiState.value.copy(
+                selectedIds = state.pageItems.map { it.id }.toSet(),
+            )
     }
 
     private fun toggleSelect(id: String) {
-        val current = editState.value
+        val current = listUiState.value
         if (!current.isEditMode) return
-        val newIds = if (id in current.selectedIds) {
-            current.selectedIds - id
-        } else {
-            current.selectedIds + id
-        }
-        editState.value = current.copy(selectedIds = newIds)
+        val newIds =
+            if (id in current.selectedIds) {
+                current.selectedIds - id
+            } else {
+                current.selectedIds + id
+            }
+        listUiState.value = current.copy(selectedIds = newIds)
+    }
+
+    private fun setTagFilter(
+        selectedTagNames: Set<String>,
+        includeUntagged: Boolean,
+    ) {
+        val current = listUiState.value
+        listUiState.value =
+            current
+                .withFilter(
+                    current.selectedTab,
+                    TabFilterState(
+                        selectedTagNames = selectedTagNames,
+                        includeUntagged = includeUntagged,
+                        pageIndex = 0,
+                    ),
+                ).copy(selectedIds = emptySet())
+    }
+
+    private fun clearTagFilter() {
+        setTagFilter(emptySet(), includeUntagged = false)
+    }
+
+    private fun changePage(delta: Int) {
+        val state = uiState.value
+        val newIndex = (state.pageIndex + delta).coerceIn(0, state.totalPages - 1)
+        if (newIndex == state.pageIndex) return
+        val current = listUiState.value
+        val filter = current.filterFor(current.selectedTab).copy(pageIndex = newIndex)
+        listUiState.value =
+            current
+                .withFilter(current.selectedTab, filter)
+                .copy(selectedIds = emptySet())
     }
 
     private fun moveSelectedTo(targetStatus: ImageStatus) {
@@ -98,7 +168,7 @@ class MainViewModel(
         val ids = state.selectedIds
         viewModelScope.launch {
             repository.moveItems(ids, fromStatus, targetStatus)
-            editState.value = editState.value.copy(selectedIds = emptySet())
+            listUiState.value = listUiState.value.copy(selectedIds = emptySet())
         }
     }
 
@@ -109,10 +179,11 @@ class MainViewModel(
         val ids = state.selectedIds
         viewModelScope.launch {
             repository.deleteItems(ids)
-            editState.value = editState.value.copy(
-                isEditMode = false,
-                selectedIds = emptySet()
-            )
+            listUiState.value =
+                listUiState.value.copy(
+                    isEditMode = false,
+                    selectedIds = emptySet(),
+                )
         }
     }
 
@@ -122,24 +193,64 @@ class MainViewModel(
         }
     }
 
-    private fun statusForTab(tab: MainTab): ImageStatus = when (tab) {
-        MainTab.Pending -> ImageStatus.Pending
-        MainTab.Confirmed -> ImageStatus.Confirmed
-        MainTab.NoModify -> ImageStatus.NoModify
-    }
+    private fun statusForTab(tab: MainTab): ImageStatus =
+        when (tab) {
+            MainTab.Pending -> ImageStatus.Pending
+            MainTab.Confirmed -> ImageStatus.Confirmed
+            MainTab.NoModify -> ImageStatus.NoModify
+        }
 
-    private data class EditUiState(
-        val selectedTab: MainTab = MainTab.Pending,
-        val isEditMode: Boolean = false,
-        val selectedIds: Set<String> = emptySet()
+    private data class TabFilterState(
+        val selectedTagNames: Set<String> = emptySet(),
+        val includeUntagged: Boolean = false,
+        val pageIndex: Int = 0,
     )
 
+    private data class ListUiState(
+        val selectedTab: MainTab = MainTab.Pending,
+        val isEditMode: Boolean = false,
+        val selectedIds: Set<String> = emptySet(),
+        val pendingFilter: TabFilterState = TabFilterState(),
+        val confirmedFilter: TabFilterState = TabFilterState(),
+        val noModifyFilter: TabFilterState = TabFilterState(),
+    ) {
+        fun filterFor(tab: MainTab): TabFilterState =
+            when (tab) {
+                MainTab.Pending -> pendingFilter
+                MainTab.Confirmed -> confirmedFilter
+                MainTab.NoModify -> noModifyFilter
+            }
+
+        fun withFilter(
+            tab: MainTab,
+            filter: TabFilterState,
+        ): ListUiState =
+            when (tab) {
+                MainTab.Pending -> copy(pendingFilter = filter)
+                MainTab.Confirmed -> copy(confirmedFilter = filter)
+                MainTab.NoModify -> copy(noModifyFilter = filter)
+            }
+    }
+
     class Factory(
-        private val repository: ImageRepository
+        private val repository: ImageRepository,
+        private val tagRepository: TagRepository,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return MainViewModel(repository) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = MainViewModel(repository, tagRepository) as T
+    }
+
+    companion object {
+        fun matchesTagFilter(
+            item: ImageListItem,
+            selectedTagNames: Set<String>,
+            includeUntagged: Boolean,
+        ): Boolean {
+            if (selectedTagNames.isEmpty() && !includeUntagged) return true
+            val user = ImageListItem.userTagsOf(item.tags)
+            val hitTag = selectedTagNames.any { it in user }
+            val hitUntagged = includeUntagged && user.isEmpty()
+            return hitTag || hitUntagged
         }
     }
 }

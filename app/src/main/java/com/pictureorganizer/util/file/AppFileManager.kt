@@ -9,8 +9,9 @@ import java.io.FileOutputStream
 /**
  * App 私有目录：`filesDir/images/{pending,confirmed,no_modify}/`。
  */
-class AppFileManager(private val context: Context) {
-
+class AppFileManager(
+    private val context: Context,
+) {
     fun imagesRoot(): File {
         val dir = File(context.filesDir, IMAGES_DIR_NAME)
         if (!dir.exists()) dir.mkdirs()
@@ -25,21 +26,31 @@ class AppFileManager(private val context: Context) {
 
     fun ensureAllDirs() {
         ImageStatus.entries.forEach { dirFor(it) }
+        exportsDir()
     }
 
-    fun createDestFile(status: ImageStatus, fileName: String): File {
-        return File(dirFor(status), fileName)
+    fun exportsDir(): File {
+        val dir = File(context.filesDir, EXPORTS_DIR_NAME)
+        if (!dir.exists()) dir.mkdirs()
+        return dir
     }
 
-    fun absoluteFile(relativePath: String): File {
-        return File(imagesRoot(), relativePath)
-    }
+    fun createDestFile(
+        status: ImageStatus,
+        fileName: String,
+    ): File = File(dirFor(status), fileName)
 
-    fun relativePath(status: ImageStatus, fileName: String): String {
-        return "${status.toDirName()}/$fileName"
-    }
+    fun absoluteFile(relativePath: String): File = File(imagesRoot(), relativePath)
 
-    fun copyFromUri(uri: Uri, destFile: File) {
+    fun relativePath(
+        status: ImageStatus,
+        fileName: String,
+    ): String = "${status.toDirName()}/$fileName"
+
+    fun copyFromUri(
+        uri: Uri,
+        destFile: File,
+    ) {
         context.contentResolver.openInputStream(uri)?.use { input ->
             FileOutputStream(destFile).use { output ->
                 input.copyTo(output)
@@ -50,7 +61,11 @@ class AppFileManager(private val context: Context) {
     /**
      * 将文件从当前相对路径搬到目标状态目录，返回新的相对路径。
      */
-    fun moveToStatus(currentRelativePath: String, fileName: String, to: ImageStatus): String {
+    fun moveToStatus(
+        currentRelativePath: String,
+        fileName: String,
+        to: ImageStatus,
+    ): String {
         val source = absoluteFile(currentRelativePath)
         val dest = createDestFile(to, fileName)
         if (source.absolutePath == dest.absolutePath) {
@@ -81,7 +96,10 @@ class AppFileManager(private val context: Context) {
      * @throws IllegalArgumentException 非法文件名或目标已存在
      * @throws IllegalStateException 源文件不存在或重命名失败
      */
-    fun renameInPlace(currentRelativePath: String, newFileName: String): String {
+    fun renameInPlace(
+        currentRelativePath: String,
+        newFileName: String,
+    ): String {
         val trimmed = newFileName.trim()
         require(trimmed.isNotEmpty()) { "文件名不能为空" }
         require(!trimmed.contains('/') && !trimmed.contains('\\')) { "文件名不能包含路径分隔符" }
@@ -113,14 +131,16 @@ class AppFileManager(private val context: Context) {
     companion object {
         private val ILLEGAL_NAME_CHARS = charArrayOf(':', '*', '?', '"', '<', '>', '|')
         const val IMAGES_DIR_NAME = "images"
+        const val EXPORTS_DIR_NAME = "exports"
         const val DIR_PENDING = "pending"
         const val DIR_CONFIRMED = "confirmed"
         const val DIR_NO_MODIFY = "no_modify"
     }
 }
 
-fun ImageStatus.toDirName(): String = when (this) {
-    ImageStatus.Pending -> AppFileManager.DIR_PENDING
-    ImageStatus.Confirmed -> AppFileManager.DIR_CONFIRMED
-    ImageStatus.NoModify -> AppFileManager.DIR_NO_MODIFY
-}
+fun ImageStatus.toDirName(): String =
+    when (this) {
+        ImageStatus.Pending -> AppFileManager.DIR_PENDING
+        ImageStatus.Confirmed -> AppFileManager.DIR_CONFIRMED
+        ImageStatus.NoModify -> AppFileManager.DIR_NO_MODIFY
+    }

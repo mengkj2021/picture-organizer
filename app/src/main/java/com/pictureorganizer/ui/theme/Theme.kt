@@ -6,26 +6,28 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-private val LightColors = lightColorScheme(
-    primary = Blue40,
-    secondary = Teal40,
-    tertiary = Sky40
-)
+private val LightColors =
+    lightColorScheme(
+        primary = Blue40,
+        secondary = Teal40,
+        tertiary = Sky40,
+    )
 
-private val DarkColors = darkColorScheme(
-    primary = Blue80,
-    secondary = Teal80,
-    tertiary = Sky80
-)
+private val DarkColors =
+    darkColorScheme(
+        primary = Blue80,
+        secondary = Teal80,
+        tertiary = Sky80,
+    )
 
 @Composable
 fun PictureOrganizerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
         typography = Typography,
-        content = content
+        content = content,
     )
 }

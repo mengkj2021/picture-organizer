@@ -6,10 +6,15 @@ import kotlinx.coroutines.flow.Flow
 
 interface TagRepository {
     fun observeTags(): Flow<List<Tag>>
+
     fun observeTemplates(): Flow<List<TagTemplate>>
+
     suspend fun getTags(): List<Tag>
+
     suspend fun getTemplates(): List<TagTemplate>
+
     suspend fun getTag(id: String): Tag?
+
     suspend fun getTemplate(id: String): TagTemplate?
 
     /** @throws IllegalArgumentException 空名或重名 */
@@ -22,7 +27,9 @@ interface TagRepository {
     suspend fun deleteTag(id: String)
 
     suspend fun insertTemplate(template: TagTemplate)
+
     suspend fun updateTemplate(template: TagTemplate)
+
     suspend fun deleteTemplate(id: String)
 
     /** 将指定模板设为默认，并清除其它默认 */

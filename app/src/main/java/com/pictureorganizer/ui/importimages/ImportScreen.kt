@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,6 +27,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -34,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -41,23 +44,25 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pictureorganizer.PictureOrganizerApplication
 import com.pictureorganizer.R
 import com.pictureorganizer.util.image.ImageManager
-import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImportScreen(
     onBack: () -> Unit,
     onImportFinished: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as PictureOrganizerApplication
-    val viewModel: ImportViewModel = viewModel(
-        factory = ImportViewModel.Factory(
-            repository = app.imageRepository,
-            imageManager = ImageManager(context, app.fileManager)
+    val viewModel: ImportViewModel =
+        viewModel(
+            factory =
+                ImportViewModel.Factory(
+                    repository = app.imageRepository,
+                    imageManager = ImageManager(context, app.fileManager),
+                    userPreferences = app.userPreferencesRepository,
+                ),
         )
-    )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -67,7 +72,7 @@ fun ImportScreen(
                 ImportUiEffect.ImportFinished -> onImportFinished()
                 is ImportUiEffect.ShowError -> {
                     snackbarHostState.showSnackbar(
-                        context.getString(effect.resId, *effect.args.toTypedArray())
+                        context.getString(effect.resId, *effect.args.toTypedArray()),
                     )
                 }
             }
@@ -80,17 +85,19 @@ fun ImportScreen(
         }
     }
 
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia()
-    ) { uris: List<Uri> ->
-        viewModel.importUris(uris)
-    }
+    val galleryLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+        ) { uris: List<Uri> ->
+            viewModel.importUris(uris)
+        }
 
-    val filesLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenMultipleDocuments()
-    ) { uris: List<Uri> ->
-        viewModel.importUris(uris)
-    }
+    val filesLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenMultipleDocuments(),
+        ) { uris: List<Uri> ->
+            viewModel.importUris(uris)
+        }
 
     Scaffold(
         modifier = modifier,
@@ -101,39 +108,66 @@ fun ImportScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = onBack,
-                        enabled = !state.isImporting
+                        enabled = !state.isImporting,
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back)
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
                 verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = stringResource(R.string.import_compress_switch),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Switch(
+                        checked = state.compressEnabled,
+                        onCheckedChange = viewModel::setCompressEnabled,
+                        enabled = !state.isImporting,
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.import_compress_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp, bottom = 24.dp),
+                )
                 Button(
                     onClick = {
                         galleryLauncher.launch(
                             PickVisualMediaRequest(
-                                ActivityResultContracts.PickVisualMedia.ImageOnly
-                            )
+                                ActivityResultContracts.PickVisualMedia.ImageOnly,
+                            ),
                         )
                     },
                     enabled = !state.isImporting,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.import_from_gallery))
                 }
@@ -143,7 +177,7 @@ fun ImportScreen(
                         filesLauncher.launch(arrayOf("image/*"))
                     },
                     enabled = !state.isImporting,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.import_from_files))
                 }
@@ -151,21 +185,23 @@ fun ImportScreen(
 
             if (state.isImporting) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f)),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f)),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = stringResource(
-                                R.string.import_progress,
-                                state.current,
-                                state.total
-                            ),
-                            color = MaterialTheme.colorScheme.onPrimary
+                            text =
+                                stringResource(
+                                    R.string.import_progress,
+                                    state.current,
+                                    state.total,
+                                ),
+                            color = MaterialTheme.colorScheme.onPrimary,
                         )
                     }
                 }

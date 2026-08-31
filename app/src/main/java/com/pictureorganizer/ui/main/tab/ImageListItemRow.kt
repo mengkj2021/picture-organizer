@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Checkbox
@@ -47,61 +47,66 @@ fun ImageListItemRow(
     isSelected: Boolean,
     onToggleSelect: () -> Unit,
     onClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(
-                if (isEditMode) Modifier.clickable(onClick = onToggleSelect)
-                else Modifier.clickable(onClick = onClick)
-            )
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .then(
+                    if (isEditMode) {
+                        Modifier.clickable(onClick = onToggleSelect)
+                    } else {
+                        Modifier.clickable(onClick = onClick)
+                    },
+                ).padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         if (isEditMode) {
             Checkbox(
                 checked = isSelected,
-                onCheckedChange = { onToggleSelect() }
+                onCheckedChange = { onToggleSelect() },
             )
         }
 
         Thumbnail(
             item = item,
-            modifier = Modifier
-                .size(72.dp)
-                .clip(RoundedCornerShape(8.dp))
+            modifier =
+                Modifier
+                    .size(72.dp)
+                    .clip(RoundedCornerShape(8.dp)),
         )
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
                 text = item.date,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text = item.description,
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 item.tags.forEach { tag ->
                     AssistChip(
                         onClick = {},
                         label = { Text(tag, style = MaterialTheme.typography.labelSmall) },
                         enabled = false,
-                        colors = AssistChipDefaults.assistChipColors(
-                            disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            disabledLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
+                        colors =
+                            AssistChipDefaults.assistChipColors(
+                                disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                disabledLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            ),
                     )
                 }
             }
@@ -112,17 +117,19 @@ fun ImageListItemRow(
 @Composable
 private fun Thumbnail(
     item: ImageListItem,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val placeholder = Color(item.placeholderColorArgb)
     val file = rememberImageFile(item.filePath)
 
     SubcomposeAsyncImage(
-        model = ImageRequest.Builder(context)
-            .data(file)
-            .crossfade(true)
-            .build(),
+        model =
+            ImageRequest
+                .Builder(context)
+                .data(file)
+                .crossfade(true)
+                .build(),
         contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier = modifier.background(placeholder),
@@ -131,23 +138,24 @@ private fun Thumbnail(
         },
         error = {
             PlaceholderThumb(placeholder)
-        }
+        },
     )
 }
 
 @Composable
 private fun PlaceholderThumb(color: Color) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(color),
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Default.Image,
+            imageVector = Icons.Default.Info,
             contentDescription = null,
             tint = Color.White.copy(alpha = 0.9f),
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier.size(32.dp),
         )
     }
 }
@@ -169,18 +177,19 @@ private fun rememberImageFile(relativePath: String): File? {
 private fun ImageListItemRowPreview() {
     PictureOrganizerTheme {
         ImageListItemRow(
-            item = ImageListItem(
-                id = "preview-01",
-                date = "2026-08-27",
-                description = "周末出游照片，待重命名",
-                tags = listOf("待处理", "旅行"),
-                placeholderColorArgb = 0xFFE57373,
-                status = ImageStatus.Pending,
-                filePath = "pending/preview-01.jpg"
-            ),
+            item =
+                ImageListItem(
+                    id = "preview-01",
+                    date = "2026-08-27",
+                    description = "周末出游照片，待重命名",
+                    tags = listOf("待处理", "旅行"),
+                    placeholderColorArgb = 0xFFE57373,
+                    status = ImageStatus.Pending,
+                    filePath = "pending/preview-01.jpg",
+                ),
             isEditMode = true,
             isSelected = true,
-            onToggleSelect = {}
+            onToggleSelect = {},
         )
     }
 }

@@ -15,7 +15,7 @@ data class PreparedImage(
     val fileName: String,
     val width: Int,
     val height: Int,
-    val compressed: Boolean
+    val compressed: Boolean,
 )
 
 /**
@@ -24,24 +24,24 @@ data class PreparedImage(
  */
 class ImageManager(
     private val context: Context,
-    private val fileManager: AppFileManager = AppFileManager(context)
+    private val fileManager: AppFileManager = AppFileManager(context),
 ) {
-
-    fun prepareForImport(uri: Uri): PreparedImage {
+    fun prepareForImport(
+        uri: Uri,
+        compressEnabled: Boolean = true,
+    ): PreparedImage {
         val id = UUID.randomUUID().toString()
         val bounds = decodeBounds(uri)
         val sizeBytes = querySizeBytes(uri)
         val needsCompress =
-            sizeBytes > MAX_BYTES ||
-                bounds.width > MAX_LONG_EDGE ||
-                bounds.height > MAX_LONG_EDGE
+            compressEnabled &&
+                (
+                    sizeBytes > MAX_BYTES ||
+                        bounds.width > MAX_LONG_EDGE ||
+                        bounds.height > MAX_LONG_EDGE
+                )
 
-        val destName = "$id.jpg"
-        val destFile = fileManager.createDestFile(ImageStatus.Pending, destName)
-
-        if (needsCompress) {
-            compressToFile(uri, destFile, bounds)
-        } else {
+        if (!needsCompress) {
             val ext = guessExtension(uri)
             val plainName = "$id.$ext"
             val plainFile = fileManager.createDestFile(ImageStatus.Pending, plainName)
@@ -52,9 +52,13 @@ class ImageManager(
                 fileName = plainName,
                 width = bounds.width,
                 height = bounds.height,
-                compressed = false
+                compressed = false,
             )
         }
+
+        val destName = "$id.jpg"
+        val destFile = fileManager.createDestFile(ImageStatus.Pending, destName)
+        compressToFile(uri, destFile, bounds)
 
         val outBounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(destFile.absolutePath, outBounds)
@@ -64,7 +68,7 @@ class ImageManager(
             fileName = destName,
             width = outBounds.outWidth,
             height = outBounds.outHeight,
-            compressed = true
+            compressed = true,
         )
     }
 
@@ -75,7 +79,7 @@ class ImageManager(
         }
         return Bounds(
             width = options.outWidth.coerceAtLeast(0),
-            height = options.outHeight.coerceAtLeast(0)
+            height = options.outHeight.coerceAtLeast(0),
         )
     }
 
@@ -86,14 +90,20 @@ class ImageManager(
         return 0L
     }
 
-    private fun compressToFile(uri: Uri, destFile: java.io.File, bounds: Bounds) {
+    private fun compressToFile(
+        uri: Uri,
+        destFile: java.io.File,
+        bounds: Bounds,
+    ) {
         val sampleSize = calculateInSampleSize(bounds, MAX_LONG_EDGE)
-        val options = BitmapFactory.Options().apply {
-            inSampleSize = sampleSize
-        }
-        val bitmap = context.contentResolver.openInputStream(uri)?.use { input ->
-            BitmapFactory.decodeStream(input, null, options)
-        } ?: error("无法解码图片")
+        val options =
+            BitmapFactory.Options().apply {
+                inSampleSize = sampleSize
+            }
+        val bitmap =
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                BitmapFactory.decodeStream(input, null, options)
+            } ?: error("无法解码图片")
 
         val scaled = scaleToLongEdge(bitmap, MAX_LONG_EDGE)
         if (scaled !== bitmap) {
@@ -105,7 +115,10 @@ class ImageManager(
         scaled.recycle()
     }
 
-    private fun scaleToLongEdge(bitmap: Bitmap, maxLongEdge: Int): Bitmap {
+    private fun scaleToLongEdge(
+        bitmap: Bitmap,
+        maxLongEdge: Int,
+    ): Bitmap {
         val longEdge = maxOf(bitmap.width, bitmap.height)
         if (longEdge <= maxLongEdge) return bitmap
         val scale = maxLongEdge.toFloat() / longEdge
@@ -114,7 +127,10 @@ class ImageManager(
         return Bitmap.createScaledBitmap(bitmap, w, h, true)
     }
 
-    private fun calculateInSampleSize(bounds: Bounds, maxLongEdge: Int): Int {
+    private fun calculateInSampleSize(
+        bounds: Bounds,
+        maxLongEdge: Int,
+    ): Int {
         var sample = 1
         var longEdge = maxOf(bounds.width, bounds.height)
         while (longEdge / (sample * 2) >= maxLongEdge) {
@@ -133,7 +149,10 @@ class ImageManager(
         }
     }
 
-    private data class Bounds(val width: Int, val height: Int)
+    private data class Bounds(
+        val width: Int,
+        val height: Int,
+    )
 
     companion object {
         const val MAX_BYTES = 2L * 1024L * 1024L

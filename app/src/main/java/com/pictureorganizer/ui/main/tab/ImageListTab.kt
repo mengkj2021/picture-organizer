@@ -20,31 +20,47 @@ fun ImageListTab(
     emptyMessage: String,
     isEditMode: Boolean,
     selectedIds: Set<String>,
+    isFilterActive: Boolean,
+    filterSummaryLabels: List<String>,
+    pageIndex: Int,
+    totalPages: Int,
+    canGoPrev: Boolean,
+    canGoNext: Boolean,
     onEditClick: () -> Unit,
     onSelectAllClick: () -> Unit,
     onMoveTo: (ImageStatus) -> Unit,
     onImportClick: () -> Unit,
     onDeleteClick: () -> Unit,
     onToggleSelect: (String) -> Unit,
+    onFilterClick: () -> Unit,
+    onClearFilter: () -> Unit,
+    onExportClick: () -> Unit,
+    onPrevPage: () -> Unit,
+    onNextPage: () -> Unit,
     onItemClick: (String) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         TabActionBar(
             currentTab = currentTab,
             isEditMode = isEditMode,
             hasSelection = selectedIds.isNotEmpty(),
+            isFilterActive = isFilterActive,
+            filterSummaryLabels = filterSummaryLabels,
             onEditClick = onEditClick,
             onSelectAllClick = onSelectAllClick,
             onMoveTo = onMoveTo,
             onImportClick = onImportClick,
-            onDeleteClick = onDeleteClick
+            onDeleteClick = onDeleteClick,
+            onExportClick = onExportClick,
+            onFilterClick = onFilterClick,
+            onClearFilter = onClearFilter,
         )
 
         if (items.isEmpty()) {
             EmptyListPlaceholder(
                 emptyMessage = emptyMessage,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
         } else {
             LazyColumn(modifier = Modifier.weight(1f)) {
@@ -54,11 +70,20 @@ fun ImageListTab(
                         isEditMode = isEditMode,
                         isSelected = item.id in selectedIds,
                         onToggleSelect = { onToggleSelect(item.id) },
-                        onClick = { onItemClick(item.id) }
+                        onClick = { onItemClick(item.id) },
                     )
                 }
             }
         }
+
+        ListPageBar(
+            pageIndex = pageIndex,
+            totalPages = totalPages,
+            canGoPrev = canGoPrev,
+            canGoNext = canGoNext,
+            onPrevClick = onPrevPage,
+            onNextClick = onNextPage,
+        )
     }
 }
 
@@ -72,12 +97,23 @@ private fun ImageListTabPreview() {
             emptyMessage = "暂无待处理图片",
             isEditMode = false,
             selectedIds = emptySet(),
+            isFilterActive = true,
+            filterSummaryLabels = listOf("风景", "未打标签"),
+            pageIndex = 0,
+            totalPages = 1,
+            canGoPrev = false,
+            canGoNext = false,
             onEditClick = {},
             onSelectAllClick = {},
             onMoveTo = {},
             onImportClick = {},
             onDeleteClick = {},
-            onToggleSelect = {}
+            onToggleSelect = {},
+            onFilterClick = {},
+            onClearFilter = {},
+            onExportClick = {},
+            onPrevPage = {},
+            onNextPage = {},
         )
     }
 }

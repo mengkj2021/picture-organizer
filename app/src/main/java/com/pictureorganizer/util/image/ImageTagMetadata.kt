@@ -10,8 +10,10 @@ import java.io.File
  * 不含状态标签（待处理 / 已确认 / 不修改）。
  */
 object ImageTagMetadata {
-
-    fun writeUserTags(file: File, tags: List<String>): Boolean {
+    fun writeUserTags(
+        file: File,
+        tags: List<String>,
+    ): Boolean {
         if (!file.exists() || !file.isFile) return false
         return runCatching {
             val userTags = ImageListItem.userTagsOf(tags)

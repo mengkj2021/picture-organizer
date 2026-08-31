@@ -40,6 +40,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -73,19 +74,22 @@ import java.io.File
 fun ImageDetailScreen(
     imageId: String,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as PictureOrganizerApplication
-    val viewModel: ImageDetailViewModel = viewModel(
-        key = imageId,
-        factory = ImageDetailViewModel.Factory(
-            imageId = imageId,
-            repository = app.imageRepository,
-            tagRepository = app.tagRepository,
-            fileManager = app.fileManager
+    val viewModel: ImageDetailViewModel =
+        viewModel(
+            key = imageId,
+            factory =
+                ImageDetailViewModel.Factory(
+                    imageId = imageId,
+                    repository = app.imageRepository,
+                    tagRepository = app.tagRepository,
+                    renameTemplateRepository = app.renameTemplateRepository,
+                    fileManager = app.fileManager,
+                ),
         )
-    )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -102,9 +106,10 @@ fun ImageDetailScreen(
         }
     }
 
-    val title = state.current?.let { item ->
-        item.filePath.substringAfterLast('/').ifEmpty { item.description }
-    } ?: stringResource(R.string.detail_title)
+    val title =
+        state.current?.let { item ->
+            item.filePath.substringAfterLast('/').ifEmpty { item.description }
+        } ?: stringResource(R.string.detail_title)
 
     Scaffold(
         modifier = modifier,
@@ -116,20 +121,21 @@ fun ImageDetailScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back)
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         when {
             state.notFound && state.current == null && !state.isBusy -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(stringResource(R.string.detail_missing))
                 }
@@ -137,44 +143,48 @@ fun ImageDetailScreen(
             else -> {
                 val current = state.current
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 ) {
                     if (current != null) {
                         ZoomableImage(
                             file = viewModel.absoluteFile(current),
                             placeholderColor = Color(current.placeholderColorArgb),
                             contentKey = current.id,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
                         )
                     } else {
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentAlignment = Alignment.Center
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                            contentAlignment = Alignment.Center,
                         ) {
                             CircularProgressIndicator()
                         }
                     }
 
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
                             text = stringResource(R.string.detail_rename),
-                            style = MaterialTheme.typography.titleSmall
+                            style = MaterialTheme.typography.titleSmall,
                         )
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             OutlinedTextField(
                                 value = state.renameDraft,
@@ -183,56 +193,96 @@ fun ImageDetailScreen(
                                 },
                                 modifier = Modifier.weight(1f),
                                 singleLine = true,
-                                enabled = !state.isBusy
+                                enabled = !state.isBusy,
                             )
                             Button(
                                 onClick = { viewModel.onEvent(ImageDetailUiEvent.SaveRename) },
-                                enabled = !state.isBusy
+                                enabled = !state.isBusy,
                             ) {
                                 Text(stringResource(R.string.detail_rename_save))
+                            }
+                        }
+                        var renameTemplateMenuExpanded by remember { mutableStateOf(false) }
+                        Box {
+                            TextButton(
+                                onClick = { renameTemplateMenuExpanded = true },
+                                enabled = !state.isBusy && state.renameTemplates.isNotEmpty(),
+                            ) {
+                                Text(stringResource(R.string.detail_apply_rename_template))
+                            }
+                            DropdownMenu(
+                                expanded = renameTemplateMenuExpanded,
+                                onDismissRequest = { renameTemplateMenuExpanded = false },
+                            ) {
+                                state.renameTemplates.forEach { template ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                if (template.isDefault) {
+                                                    stringResource(
+                                                        R.string.detail_template_default_fmt,
+                                                        template.name,
+                                                    )
+                                                } else {
+                                                    template.name
+                                                },
+                                            )
+                                        },
+                                        onClick = {
+                                            renameTemplateMenuExpanded = false
+                                            viewModel.onEvent(
+                                                ImageDetailUiEvent.ApplyRenameTemplate(template.id),
+                                            )
+                                        },
+                                    )
+                                }
                             }
                         }
 
                         Text(
                             text = stringResource(R.string.detail_tags),
-                            style = MaterialTheme.typography.titleSmall
+                            style = MaterialTheme.typography.titleSmall,
                         )
-                        val userTags = current?.let { ImageListItem.userTagsOf(it.tags) }
-                            .orEmpty()
+                        val userTags =
+                            current
+                                ?.let { ImageListItem.userTagsOf(it.tags) }
+                                .orEmpty()
                         val libraryNames = state.libraryTags.map { it.name }.toSet()
                         if (state.libraryTags.isNotEmpty()) {
                             Text(
                                 text = stringResource(R.string.detail_tag_library),
-                                style = MaterialTheme.typography.labelMedium
+                                style = MaterialTheme.typography.labelMedium,
                             )
                             FlowRow(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 state.libraryTags.forEach { tag ->
                                     FilterChip(
                                         selected = tag.name in userTags,
                                         onClick = {
                                             viewModel.onEvent(
-                                                ImageDetailUiEvent.ToggleLibraryTag(tag.name)
+                                                ImageDetailUiEvent.ToggleLibraryTag(tag.name),
                                             )
                                         },
                                         enabled = !state.isBusy,
-                                        label = { Text(tag.name) }
+                                        label = { Text(tag.name) },
                                     )
                                 }
                             }
                         }
-                        val customTags = userTags.withIndex()
-                            .filter { (_, name) -> name !in libraryNames }
+                        val customTags =
+                            userTags
+                                .withIndex()
+                                .filter { (_, name) -> name !in libraryNames }
                         if (customTags.isNotEmpty()) {
                             Text(
                                 text = stringResource(R.string.detail_tag_custom),
-                                style = MaterialTheme.typography.labelMedium
+                                style = MaterialTheme.typography.labelMedium,
                             )
                             FlowRow(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 customTags.forEach { (index, tag) ->
                                     InputChip(
@@ -245,15 +295,16 @@ fun ImageDetailScreen(
                                             Icon(
                                                 imageVector = Icons.Default.Close,
                                                 contentDescription = stringResource(R.string.detail_tag_delete),
-                                                modifier = Modifier
-                                                    .size(18.dp)
-                                                    .clickable {
-                                                        viewModel.onEvent(
-                                                            ImageDetailUiEvent.DeleteTag(index)
-                                                        )
-                                                    }
+                                                modifier =
+                                                    Modifier
+                                                        .size(18.dp)
+                                                        .clickable {
+                                                            viewModel.onEvent(
+                                                                ImageDetailUiEvent.DeleteTag(index),
+                                                            )
+                                                        },
                                             )
-                                        }
+                                        },
                                     )
                                 }
                             }
@@ -262,13 +313,13 @@ fun ImageDetailScreen(
                         Box {
                             OutlinedButton(
                                 onClick = { templateMenuExpanded = true },
-                                enabled = !state.isBusy && state.templates.isNotEmpty()
+                                enabled = !state.isBusy && state.templates.isNotEmpty(),
                             ) {
                                 Text(stringResource(R.string.detail_apply_template))
                             }
                             DropdownMenu(
                                 expanded = templateMenuExpanded,
-                                onDismissRequest = { templateMenuExpanded = false }
+                                onDismissRequest = { templateMenuExpanded = false },
                             ) {
                                 state.templates.forEach { template ->
                                     DropdownMenuItem(
@@ -277,26 +328,26 @@ fun ImageDetailScreen(
                                                 if (template.isDefault) {
                                                     stringResource(
                                                         R.string.detail_template_default_fmt,
-                                                        template.name
+                                                        template.name,
                                                     )
                                                 } else {
                                                     template.name
-                                                }
+                                                },
                                             )
                                         },
                                         onClick = {
                                             templateMenuExpanded = false
                                             viewModel.onEvent(
-                                                ImageDetailUiEvent.ApplyTemplate(template.id)
+                                                ImageDetailUiEvent.ApplyTemplate(template.id),
                                             )
-                                        }
+                                        },
                                     )
                                 }
                             }
                         }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             OutlinedTextField(
                                 value = state.tagDraft,
@@ -312,20 +363,20 @@ fun ImageDetailScreen(
                                             stringResource(R.string.detail_tag_edit)
                                         } else {
                                             stringResource(R.string.detail_tag_add)
-                                        }
+                                        },
                                     )
-                                }
+                                },
                             )
                             Button(
                                 onClick = { viewModel.onEvent(ImageDetailUiEvent.SaveTag) },
-                                enabled = !state.isBusy
+                                enabled = !state.isBusy,
                             ) {
                                 Text(stringResource(R.string.detail_tag_save))
                             }
                             if (state.editingUserTagIndex != null) {
                                 OutlinedButton(
                                     onClick = { viewModel.onEvent(ImageDetailUiEvent.CancelEditTag) },
-                                    enabled = !state.isBusy
+                                    enabled = !state.isBusy,
                                 ) {
                                     Text(stringResource(R.string.detail_tag_cancel))
                                 }
@@ -338,10 +389,11 @@ fun ImageDetailScreen(
                         selectedId = state.currentId,
                         resolveFile = { viewModel.absoluteFile(it) },
                         onSelect = { viewModel.onEvent(ImageDetailUiEvent.SelectSibling(it)) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(88.dp)
-                            .padding(bottom = 8.dp)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(88.dp)
+                                .padding(bottom = 8.dp),
                     )
                 }
             }
@@ -354,44 +406,49 @@ private fun ZoomableImage(
     file: File,
     placeholderColor: Color,
     contentKey: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var scale by remember(contentKey) { mutableFloatStateOf(1f) }
     var offset by remember(contentKey) { mutableStateOf(Offset.Zero) }
     val context = LocalContext.current
 
     Box(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .pointerInput(contentKey) {
-                detectTransformGestures { _, pan, zoom, _ ->
-                    scale = (scale * zoom).coerceIn(1f, 5f)
-                    offset = if (scale > 1f) offset + pan else Offset.Zero
-                }
-            },
-        contentAlignment = Alignment.Center
+        modifier =
+            modifier
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .pointerInput(contentKey) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        scale = (scale * zoom).coerceIn(1f, 5f)
+                        offset = if (scale > 1f) offset + pan else Offset.Zero
+                    }
+                },
+        contentAlignment = Alignment.Center,
     ) {
         AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(file)
-                .crossfade(true)
-                .build(),
+            model =
+                ImageRequest
+                    .Builder(context)
+                    .data(file)
+                    .crossfade(true)
+                    .build(),
             contentDescription = null,
             contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer(
-                    scaleX = scale,
-                    scaleY = scale,
-                    translationX = offset.x,
-                    translationY = offset.y
-                )
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(
+                        scaleX = scale,
+                        scaleY = scale,
+                        translationX = offset.x,
+                        translationY = offset.y,
+                    ),
         )
         if (!file.exists()) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(placeholderColor.copy(alpha = 0.5f))
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(placeholderColor.copy(alpha = 0.5f)),
             )
         }
     }
@@ -403,41 +460,43 @@ private fun SiblingThumbStrip(
     selectedId: String,
     resolveFile: (ImageListItem) -> File,
     onSelect: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     LazyRow(
         modifier = modifier,
         contentPadding = PaddingValues(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         items(siblings, key = { it.id }) { item ->
             val selected = item.id == selectedId
             val shape = RoundedCornerShape(8.dp)
             AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(resolveFile(item))
-                    .crossfade(true)
-                    .build(),
+                model =
+                    ImageRequest
+                        .Builder(context)
+                        .data(resolveFile(item))
+                        .crossfade(true)
+                        .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(shape)
-                    .then(
-                        if (selected) {
-                            Modifier.border(
-                                width = 2.dp,
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = shape
-                            )
-                        } else {
-                            Modifier
-                        }
-                    )
-                    .background(Color(item.placeholderColorArgb))
-                    .clickable { onSelect(item.id) }
+                modifier =
+                    Modifier
+                        .size(72.dp)
+                        .clip(shape)
+                        .then(
+                            if (selected) {
+                                Modifier.border(
+                                    width = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shape = shape,
+                                )
+                            } else {
+                                Modifier
+                            },
+                        ).background(Color(item.placeholderColorArgb))
+                        .clickable { onSelect(item.id) },
             )
         }
     }

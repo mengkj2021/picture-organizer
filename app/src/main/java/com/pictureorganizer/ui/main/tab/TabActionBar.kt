@@ -1,14 +1,20 @@
 package com.pictureorganizer.ui.main.tab
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,97 +30,148 @@ import com.pictureorganizer.R
 import com.pictureorganizer.model.ImageStatus
 import com.pictureorganizer.ui.main.MainTab
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TabActionBar(
     currentTab: MainTab,
     isEditMode: Boolean,
     hasSelection: Boolean,
+    isFilterActive: Boolean,
+    filterSummaryLabels: List<String>,
     onEditClick: () -> Unit,
     onSelectAllClick: () -> Unit,
     onMoveTo: (ImageStatus) -> Unit,
     onImportClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onExportClick: () -> Unit,
+    onFilterClick: () -> Unit,
+    onClearFilter: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var moveMenuExpanded by remember { mutableStateOf(false) }
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            TextButton(onClick = onEditClick) {
-                Text(
-                    if (isEditMode) stringResource(R.string.action_done)
-                    else stringResource(R.string.action_edit)
-                )
-            }
-            TextButton(
-                onClick = onSelectAllClick,
-                enabled = isEditMode
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(stringResource(R.string.action_select_all))
-            }
-            TextButton(
-                onClick = { moveMenuExpanded = true },
-                enabled = isEditMode && hasSelection
-            ) {
-                Text(stringResource(R.string.action_move_to))
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = null
-                )
-            }
-            DropdownMenu(
-                expanded = moveMenuExpanded,
-                onDismissRequest = { moveMenuExpanded = false }
-            ) {
-                moveTargets(currentTab).forEach { target ->
-                    DropdownMenuItem(
-                        text = { Text(moveTargetLabel(target)) },
-                        onClick = {
-                            moveMenuExpanded = false
-                            onMoveTo(target)
-                        }
+                TextButton(onClick = onEditClick) {
+                    Text(
+                        if (isEditMode) {
+                            stringResource(R.string.action_done)
+                        } else {
+                            stringResource(R.string.action_edit)
+                        },
                     )
+                }
+                TextButton(
+                    onClick = onSelectAllClick,
+                    enabled = isEditMode,
+                ) {
+                    Text(stringResource(R.string.action_select_all))
+                }
+                TextButton(
+                    onClick = { moveMenuExpanded = true },
+                    enabled = isEditMode && hasSelection,
+                ) {
+                    Text(stringResource(R.string.action_move_to))
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                    )
+                }
+                DropdownMenu(
+                    expanded = moveMenuExpanded,
+                    onDismissRequest = { moveMenuExpanded = false },
+                ) {
+                    moveTargets(currentTab).forEach { target ->
+                        DropdownMenuItem(
+                            text = { Text(moveTargetLabel(target)) },
+                            onClick = {
+                                moveMenuExpanded = false
+                                onMoveTo(target)
+                            },
+                        )
+                    }
+                }
+                IconButton(onClick = onFilterClick) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = stringResource(R.string.action_filter),
+                    )
+                }
+            }
+
+            when (currentTab) {
+                MainTab.Pending -> {
+                    TextButton(onClick = onImportClick) {
+                        Text(stringResource(R.string.action_import))
+                    }
+                }
+                MainTab.NoModify -> {
+                    TextButton(
+                        onClick = onDeleteClick,
+                        enabled = isEditMode && hasSelection,
+                    ) {
+                        Text(stringResource(R.string.action_delete))
+                    }
+                }
+                MainTab.Confirmed -> {
+                    TextButton(onClick = onExportClick) {
+                        Text(stringResource(R.string.action_export_zip))
+                    }
                 }
             }
         }
 
-        when (currentTab) {
-            MainTab.Pending -> {
-                TextButton(onClick = onImportClick) {
-                    Text(stringResource(R.string.action_import))
-                }
-            }
-            MainTab.NoModify -> {
-                TextButton(
-                    onClick = onDeleteClick,
-                    enabled = isEditMode && hasSelection
+        if (isFilterActive && filterSummaryLabels.isNotEmpty()) {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                FlowRow(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    Text(stringResource(R.string.action_delete))
+                    filterSummaryLabels.forEach { label ->
+                        AssistChip(
+                            onClick = onFilterClick,
+                            label = { Text(label) },
+                        )
+                    }
+                }
+                TextButton(onClick = onClearFilter) {
+                    Text(stringResource(R.string.action_filter_clear))
                 }
             }
-            MainTab.Confirmed -> Unit
         }
     }
 }
 
-private fun moveTargets(currentTab: MainTab): List<ImageStatus> = when (currentTab) {
-    MainTab.Pending -> listOf(ImageStatus.Confirmed, ImageStatus.NoModify)
-    MainTab.Confirmed -> listOf(ImageStatus.Pending, ImageStatus.NoModify)
-    MainTab.NoModify -> listOf(ImageStatus.Pending, ImageStatus.Confirmed)
-}
+private fun moveTargets(currentTab: MainTab): List<ImageStatus> =
+    when (currentTab) {
+        MainTab.Pending -> listOf(ImageStatus.Confirmed, ImageStatus.NoModify)
+        MainTab.Confirmed -> listOf(ImageStatus.Pending, ImageStatus.NoModify)
+        MainTab.NoModify -> listOf(ImageStatus.Pending, ImageStatus.Confirmed)
+    }
 
 @Composable
-private fun moveTargetLabel(status: ImageStatus): String = when (status) {
-    ImageStatus.Pending -> stringResource(R.string.move_to_pending)
-    ImageStatus.Confirmed -> stringResource(R.string.move_to_confirmed)
-    ImageStatus.NoModify -> stringResource(R.string.move_to_no_modify)
-}
+private fun moveTargetLabel(status: ImageStatus): String =
+    when (status) {
+        ImageStatus.Pending -> stringResource(R.string.move_to_pending)
+        ImageStatus.Confirmed -> stringResource(R.string.move_to_confirmed)
+        ImageStatus.NoModify -> stringResource(R.string.move_to_no_modify)
+    }

@@ -2,8 +2,8 @@ package com.pictureorganizer.ui.main
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,9 +25,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pictureorganizer.R
 import com.pictureorganizer.data.repository.MockImageRepository
+import com.pictureorganizer.data.repository.MockTagRepository
+import com.pictureorganizer.model.TagFilterCriteria
 import com.pictureorganizer.ui.main.tab.ImageListTab
 import com.pictureorganizer.ui.theme.PictureOrganizerTheme
 
@@ -38,18 +39,21 @@ fun MainScreen(
     onNavigateToImport: () -> Unit = {},
     onNavigateToDetail: (String) -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onNavigateToFilter: (TagFilterCriteria) -> Unit = {},
+    onNavigateToExportZip: () -> Unit = {},
+    modifier: Modifier = Modifier,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val untaggedLabel = stringResource(R.string.filter_untagged)
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
                 is MainUiEffect.ShowSnackbar -> {
                     snackbarHostState.showSnackbar(
-                        message = context.getString(effect.messageResId)
+                        message = context.getString(effect.messageResId),
                     )
                 }
                 MainUiEffect.NavigateToImport -> onNavigateToImport()
@@ -57,12 +61,18 @@ fun MainScreen(
         }
     }
 
-    val currentItems = state.itemsForTab(state.selectedTab)
-    val emptyMessage = when (state.selectedTab) {
-        MainTab.Pending -> stringResource(R.string.empty_pending)
-        MainTab.Confirmed -> stringResource(R.string.empty_confirmed)
-        MainTab.NoModify -> stringResource(R.string.empty_no_modify)
-    }
+    val emptyMessage =
+        when (state.selectedTab) {
+            MainTab.Pending -> stringResource(R.string.empty_pending)
+            MainTab.Confirmed -> stringResource(R.string.empty_confirmed)
+            MainTab.NoModify -> stringResource(R.string.empty_no_modify)
+        }
+
+    val filterSummaryLabels =
+        buildList {
+            addAll(state.selectedTagNames.sorted())
+            if (state.includeUntagged) add(untaggedLabel)
+        }
 
     Scaffold(
         modifier = modifier,
@@ -74,10 +84,10 @@ fun MainScreen(
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = stringResource(R.string.settings_title)
+                            contentDescription = stringResource(R.string.settings_title),
                         )
                     }
-                }
+                },
             )
         },
         bottomBar = {
@@ -86,37 +96,55 @@ fun MainScreen(
                     selected = state.selectedTab == MainTab.Pending,
                     onClick = { viewModel.onEvent(MainUiEvent.SelectTab(MainTab.Pending)) },
                     icon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                    label = { Text(stringResource(R.string.tab_pending)) }
+                    label = { Text(stringResource(R.string.tab_pending)) },
                 )
                 NavigationBarItem(
                     selected = state.selectedTab == MainTab.Confirmed,
                     onClick = { viewModel.onEvent(MainUiEvent.SelectTab(MainTab.Confirmed)) },
                     icon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
-                    label = { Text(stringResource(R.string.tab_confirmed)) }
+                    label = { Text(stringResource(R.string.tab_confirmed)) },
                 )
                 NavigationBarItem(
                     selected = state.selectedTab == MainTab.NoModify,
                     onClick = { viewModel.onEvent(MainUiEvent.SelectTab(MainTab.NoModify)) },
-                    icon = { Icon(Icons.Default.Block, contentDescription = null) },
-                    label = { Text(stringResource(R.string.tab_no_modify)) }
+                    icon = { Icon(Icons.Default.Close, contentDescription = null) },
+                    label = { Text(stringResource(R.string.tab_no_modify)) },
                 )
             }
-        }
+        },
     ) { innerPadding ->
         ImageListTab(
             currentTab = state.selectedTab,
-            items = currentItems,
+            items = state.pageItems,
             emptyMessage = emptyMessage,
             isEditMode = state.isEditMode,
             selectedIds = state.selectedIds,
+            isFilterActive = state.isFilterActive,
+            filterSummaryLabels = filterSummaryLabels,
+            pageIndex = state.pageIndex,
+            totalPages = state.totalPages,
+            canGoPrev = state.canGoPrev,
+            canGoNext = state.canGoNext,
             onEditClick = { viewModel.onEvent(MainUiEvent.ToggleEditMode) },
             onSelectAllClick = { viewModel.onEvent(MainUiEvent.SelectAll) },
             onMoveTo = { viewModel.onEvent(MainUiEvent.MoveSelectedTo(it)) },
             onImportClick = { viewModel.onEvent(MainUiEvent.ImportImages) },
             onDeleteClick = { viewModel.onEvent(MainUiEvent.DeleteSelected) },
             onToggleSelect = { viewModel.onEvent(MainUiEvent.ToggleSelect(it)) },
+            onFilterClick = {
+                onNavigateToFilter(
+                    TagFilterCriteria(
+                        selectedTagNames = state.selectedTagNames,
+                        includeUntagged = state.includeUntagged,
+                    ),
+                )
+            },
+            onClearFilter = { viewModel.onEvent(MainUiEvent.ClearTagFilter) },
+            onExportClick = onNavigateToExportZip,
+            onPrevPage = { viewModel.onEvent(MainUiEvent.PrevPage) },
+            onNextPage = { viewModel.onEvent(MainUiEvent.NextPage) },
             onItemClick = onNavigateToDetail,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
         )
     }
 }
@@ -126,7 +154,7 @@ fun MainScreen(
 private fun MainScreenPreview() {
     PictureOrganizerTheme {
         MainScreen(
-            viewModel = MainViewModel(MockImageRepository)
+            viewModel = MainViewModel(MockImageRepository, MockTagRepository),
         )
     }
 }

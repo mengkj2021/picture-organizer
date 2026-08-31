@@ -6,5 +6,5 @@ data class TagTemplate(
     val tagNames: List<String> = emptyList(),
     val isDefault: Boolean = false,
     val sortOrder: Int = 0,
-    val createdAt: Long = 0L
+    val createdAt: Long = 0L,
 )

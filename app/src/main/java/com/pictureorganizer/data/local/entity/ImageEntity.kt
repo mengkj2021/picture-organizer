@@ -11,5 +11,5 @@ data class ImageEntity(
     val description: String,
     val status: String,
     val importedAt: Long,
-    val tagsJson: String
+    val tagsJson: String,
 )

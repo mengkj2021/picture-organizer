@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TagDao {
-
     @Query("SELECT * FROM tags ORDER BY sortOrder ASC, name ASC")
     fun observeAll(): Flow<List<TagEntity>>
 

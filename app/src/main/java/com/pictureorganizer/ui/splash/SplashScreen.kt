@@ -18,21 +18,23 @@ private const val SPLASH_DELAY_MS = 300L
 
 @Composable
 fun SplashScreen(
-    onNavigateToMain: () -> Unit,
-    modifier: Modifier = Modifier
+    onNavigateNext: (tutorialCompleted: Boolean) -> Unit,
+    resolveTutorialCompleted: suspend () -> Boolean,
+    modifier: Modifier = Modifier,
 ) {
     LaunchedEffect(Unit) {
         delay(SPLASH_DELAY_MS)
-        onNavigateToMain()
+        val completed = resolveTutorialCompleted()
+        onNavigateNext(completed)
     }
 
     Box(
         modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineMedium,
         )
     }
 }
@@ -41,6 +43,9 @@ fun SplashScreen(
 @Composable
 private fun SplashScreenPreview() {
     PictureOrganizerTheme {
-        SplashScreen(onNavigateToMain = {})
+        SplashScreen(
+            onNavigateNext = {},
+            resolveTutorialCompleted = { true },
+        )
     }
 }

@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ImageDao {
-
     @Query("SELECT * FROM images WHERE status = :status ORDER BY importedAt DESC")
     fun observeByStatus(status: String): Flow<List<ImageEntity>>
 
