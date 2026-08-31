@@ -17,6 +17,7 @@
 
 - [x] TopAppBar + 返回（无底部导航）
 - [x] 来源选择、进度与结果（见区域文件）
+- [x] C10：导入前「按规则压缩」开关（DataStore）
 - [ ] 导入失败明细列表（后续；现 Snackbar）
 
 | 区域 | 文档 |
@@ -52,7 +53,9 @@
 
 ## 8. 数据依赖
 
-- `ImportScreen` / `ImportViewModel`；`AppFileManager`、`ImageManager`；`ImageRepository.insert`
+- `ImportScreen` / `ImportViewModel`
+- `AppFileManager`、`ImageManager`；`ImageRepository.insert`
+- `UserPreferencesRepository`：`import_compress_enabled`、`default_tag_names`（合并进导入标签）
 - 详见 [架构设计.md](../../设计/架构设计.md)
 
 ## 9. 待定事项
@@ -65,3 +68,5 @@
 |---|---|---|
 | 2026-08-28 | 建立并实现导入 + Room | （待提交） |
 | 2026-08-30 | 细拆为目录：来源选择 / 进度与结果 | （待提交） |
+| 2026-08-31 | C10：导入前压缩开关 | 见开发日志 |
+| 2026-08-31 | 文档补 Preferences（压缩 + 默认标签） | — |

@@ -21,6 +21,8 @@
 - [x] 底部 NavigationBar（待处理 / 已确认 / 不修改）
 - [x] 三 Tab 一览与菜单（见下表区域文件）
 - [x] 共用列表项（缩略图 + 进详情）
+- [x] C3：三 Tab 标签筛选（多选 +「未打标签」）+ 页码分页（每页 30）
+- [x] 筛选入口改为 navigate → [`filter`](../筛选画面/README.md)；返回展示条件摘要
 
 | 区域 | 文档 |
 |---|---|
@@ -55,20 +57,21 @@
 
 | 方向 | 说明 |
 |---|---|
-| 从哪里进入 | [启动画面](../启动画面/README.md) 自动跳转 |
-| 可前往 | [导入画面](../导入画面/README.md)；[图片详细画面](../图片详细画面/README.md)；[设置画面](../设置画面/README.md) |
+| 从哪里进入 | [启动画面](../启动画面/README.md) / [教程画面](../教程画面/README.md) |
+| 可前往 | [导入画面](../导入画面/README.md)；[图片详细画面](../图片详细画面/README.md)；[设置画面](../设置画面/README.md)；[筛选画面](../筛选画面/README.md)；[图片打包画面](../图片打包画面/README.md)（已确认菜单） |
 | 退出去向 | 退出应用 |
 
 ## 8. 数据依赖
 
 - UI：`MainScreen` + `ui/main/tab/`
-- 逻辑：`MainViewModel`（`MainUiState` / `MainUiEvent` / `MainUiEffect`）
-- 数据：`ImageRepository` ← `RoomImageRepository`；文件 `images/{pending,confirmed,no_modify}/`
+- 逻辑：`MainViewModel`（`MainUiState` / `MainUiEvent` / `MainUiEffect`）；注入 `ImageRepository` + `TagRepository`
+- 数据：`ImageRepository` ← `RoomImageRepository`；标签库 `TagRepository`；文件 `images/{pending,confirmed,no_modify}/`
+- 列表：全量 Flow 按 status → ViewModel 内标签过滤 + 每页 30 切片；各 Tab 独立保留筛选与页码
 - 详见 [架构设计.md](../../设计/架构设计.md)
 
 ## 9. 待定事项
 
-- [ ] Tab 与标签体系的映射规则
+- [ ] Tab 与标签体系的映射规则（列表筛选维度已确认为用户标签；与此条独立）
 
 ## 10. 开发记录
 
@@ -79,3 +82,6 @@
 | 2026-08-29 | 真实缩略图；点击进详情 | （待提交） |
 | 2026-08-30 | 细拆为目录：三 Tab「菜单 / 一览」+ 列表项 | （待提交） |
 | 2026-08-30 | TopAppBar 设置入口 → `settings` | （待提交） |
+| 2026-08-31 | C3：标签筛选 + 页码分页（每页 30；全选当前页） | （待提交） |
+| 2026-08-31 | 筛选 Dialog → 独立 `filter` 画面；条件摘要 Chip | 见开发日志 |
+| 2026-08-31 | 文档同步：可前往补 filter / export-zip | — |

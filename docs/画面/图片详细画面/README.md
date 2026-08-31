@@ -55,14 +55,15 @@
 ## 8. 数据依赖
 
 - `ImageDetailScreen` / `ImageDetailViewModel`
-- `ImageRepository`：`rename` / `updateTags`；`TagRepository`：库标签与模板
+- `ImageRepository`：`rename` / `updateTags`；`TagRepository`：库标签与标签模板
+- `RenameTemplateRepository` + `RenamePatternApplier`（套用重命名模板）
 - `ImageTagMetadata`；Coil + `filePath`
 - 详见 [架构设计.md](../../设计/架构设计.md)
 
 ## 9. 待定事项
 
 - [ ] 返回未保存拦截；导入时从 Exif 回读标签
-- [ ] 重命名套用模板（**C9**，C6 选 R1）
+- [x] 重命名套用模板（**C9**）
 
 ## 10. 开发记录
 
@@ -70,4 +71,5 @@
 |---|---|---|
 | 2026-08-29 | 画面创建 | 见 [开发日志-2026-08-29](../../日志/开发日志-2026-08-29.md) |
 | 2026-08-30 | 细拆为目录：主图 / 重命名 / 标签 / 缩略条 | （待提交） |
-| 2026-08-30 | C6：库标签多选 + 套用标签模板（重命名模板留 C9） | （待提交） |
+| 2026-08-30 | C6：库标签多选 + 套用标签模板（重命名模板留 C9） | 见开发日志 |
+| 2026-08-31 | C9：套用重命名模板；文档补 RenameTemplate 依赖 | 见开发日志 |
