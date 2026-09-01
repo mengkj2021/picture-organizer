@@ -3,6 +3,7 @@ package com.pictureorganizer.ui.imagedetail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -421,6 +422,14 @@ private fun ZoomableImage(
                         scale = (scale * zoom).coerceIn(1f, 5f)
                         offset = if (scale > 1f) offset + pan else Offset.Zero
                     }
+                }
+                .pointerInput(contentKey) {
+                    detectTapGestures(
+                        onDoubleTap = {
+                            scale = 1f
+                            offset = Offset.Zero
+                        },
+                    )
                 },
         contentAlignment = Alignment.Center,
     ) {
