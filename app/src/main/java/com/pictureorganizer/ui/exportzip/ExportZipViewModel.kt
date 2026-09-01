@@ -8,7 +8,7 @@ import com.pictureorganizer.data.repository.ImageRepository
 import com.pictureorganizer.model.ImageListItem
 import com.pictureorganizer.model.ImageStatus
 import com.pictureorganizer.model.TagFilterCriteria
-import com.pictureorganizer.ui.main.MainViewModel
+import com.pictureorganizer.model.matchesTagFilter
 import com.pictureorganizer.util.file.AppFileManager
 import com.pictureorganizer.util.file.ZipExporter
 import kotlinx.coroutines.Dispatchers
@@ -44,7 +44,7 @@ class ExportZipViewModel(
         ) { items, filter, sess ->
             val matched =
                 items.filter {
-                    MainViewModel.matchesTagFilter(it, filter.selectedTagNames, filter.includeUntagged)
+                    it.matchesTagFilter(filter.selectedTagNames, filter.includeUntagged)
                 }
             ExportZipUiState(
                 filter = filter,
@@ -101,8 +101,7 @@ class ExportZipViewModel(
                     val filter = filterState.value
                     val matched =
                         all.filter {
-                            MainViewModel.matchesTagFilter(
-                                it,
+                            it.matchesTagFilter(
                                 filter.selectedTagNames,
                                 filter.includeUntagged,
                             )

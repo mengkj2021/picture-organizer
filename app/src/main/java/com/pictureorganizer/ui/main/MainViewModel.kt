@@ -7,6 +7,7 @@ import com.pictureorganizer.data.repository.ImageRepository
 import com.pictureorganizer.data.repository.TagRepository
 import com.pictureorganizer.model.ImageListItem
 import com.pictureorganizer.model.ImageStatus
+import com.pictureorganizer.model.matchesTagFilter
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -43,7 +44,7 @@ class MainViewModel(
                 }
             val filtered =
                 source.filter {
-                    matchesTagFilter(it, tabFilter.selectedTagNames, tabFilter.includeUntagged)
+                    it.matchesTagFilter(tabFilter.selectedTagNames, tabFilter.includeUntagged)
                 }
             val totalCount = filtered.size
             val totalPages = max(1, (totalCount + MAIN_PAGE_SIZE - 1) / MAIN_PAGE_SIZE)
@@ -240,17 +241,4 @@ class MainViewModel(
         override fun <T : ViewModel> create(modelClass: Class<T>): T = MainViewModel(repository, tagRepository) as T
     }
 
-    companion object {
-        fun matchesTagFilter(
-            item: ImageListItem,
-            selectedTagNames: Set<String>,
-            includeUntagged: Boolean,
-        ): Boolean {
-            if (selectedTagNames.isEmpty() && !includeUntagged) return true
-            val user = ImageListItem.userTagsOf(item.tags)
-            val hitTag = selectedTagNames.any { it in user }
-            val hitUntagged = includeUntagged && user.isEmpty()
-            return hitTag || hitUntagged
-        }
-    }
 }
