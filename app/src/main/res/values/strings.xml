@@ -41,8 +41,13 @@
     <string name="export_zip_result_item">%1$s · %2$d 张</string>
     <string name="export_zip_share">分享</string>
     <string name="export_zip_done">打包完成</string>
-    <string name="import_fail_all">全部导入失败</string>
-    <string name="import_fail_partial">导入完成：%1$d 张成功，%2$d 张失败</string>
+    <string name="import_failures_title">导入失败（%1$d）</string>
+    <string name="import_failure_retry">重试</string>
+    <string name="import_failure_retry_all">全部重试</string>
+    <string name="import_failure_done">完成</string>
+    <string name="import_error_read">无法读取文件</string>
+    <string name="import_error_decode">无法解码图片</string>
+    <string name="import_error_unknown">未知错误</string>
     <string name="action_back">返回</string>
     <string name="detail_title">图片详情</string>
     <string name="detail_missing">图片不存在或已删除</string>

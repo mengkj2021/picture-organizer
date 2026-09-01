@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.provider.OpenableColumns
 import com.pictureorganizer.model.ImageStatus
 import com.pictureorganizer.util.file.AppFileManager
 import java.io.FileOutputStream
@@ -147,6 +148,22 @@ class ImageManager(
             type.contains("jpeg") || type.contains("jpg") -> "jpg"
             else -> "jpg"
         }
+    }
+
+    /** 查询 Uri 的显示名（失败时回退到路径末段），供失败明细展示 */
+    fun displayNameOf(uri: Uri): String {
+        val queried =
+            runCatching {
+                context.contentResolver
+                    .query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                    ?.use { cursor ->
+                        if (cursor.moveToFirst()) cursor.getString(0) else null
+                    }
+            }.getOrNull()
+        return queried
+            ?.takeIf { it.isNotBlank() }
+            ?: uri.lastPathSegment?.substringAfterLast('/')?.takeIf { it.isNotBlank() }
+            ?: "未命名图片"
     }
 
     private data class Bounds(
