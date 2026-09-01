@@ -123,5 +123,5 @@
     <string name="tutorial_page2_title">整理分类</string>
     <string name="tutorial_page2_body">移动到已确认或不修改，并为图片打标签。</string>
     <string name="tutorial_page3_title">筛选与打包</string>
-    <string name="tutorial_page3_body">按标签筛选列表；后续可按标签打包导出。</string>
+    <string name="tutorial_page3_body">按标签筛选列表；已确认图片可按标签打包导出。</string>
 </resources>
