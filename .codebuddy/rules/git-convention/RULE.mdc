@@ -11,7 +11,7 @@ provider: both
 
 本仓库文档与提交信息均为中文。历史教训：Windows 上编码错误会造成中文**真乱码且不可逆**。任何 commit / push 遵循以下纪律。
 
-> 面向人的 onboarding 事实（账号配置、克隆、勿提交明细、Gradle 发行包）见仓库根 [`提交注意事项.md`](../../提交注意事项.md)，不在此重复。
+> 面向人的 onboarding 事实（账号配置、克隆、勿提交明细、Gradle 发行包）见仓库根 [`README.md`](../../README.md)（「仓库与账号配置」与「开发约定 · 勿提交内容」），不在此重复。
 
 ## 提交编码（防乱码）
 
@@ -35,7 +35,7 @@ provider: both
 
 ## 勿提交内容（摘要）
 
-`build/`、`.gradle/`、`.kotlin/`、`.idea/`、`*.iml`、`local.properties`、`android/gradle/wrapper/*.zip`、`.DS_Store`、`*.jks` / `*.keystore`、`*.log`、`.codebuddy/plans/` 等本地产物一律不提交（完整明细见仓库根 `提交注意事项.md`）。
+`build/`、`.gradle/`、`.kotlin/`、`.idea/`、`*.iml`、`local.properties`、`android/gradle/wrapper/*.zip`、`.DS_Store`、`*.jks` / `*.keystore`、`*.log`、`.codebuddy/plans/` 等本地产物一律不提交（完整明细见仓库根 [`README.md`](../../README.md)「开发约定 · 勿提交内容」）。
 
 ## push 前自检
 
