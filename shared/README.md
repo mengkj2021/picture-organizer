@@ -20,15 +20,18 @@
 │   │   └── 文档整理.md
 │   ├── rules/
 │   │   ├── sync-convention.md         # 双工具规则同步约定
-│   │   └── dev-convention.md          # AI 全量开发、文档先行约定
+│   │   ├── dev-convention.md          # AI 全量开发、文档先行约定
+│   │   └── git-convention.md          # git 提交纪律（-F 编码、禁 add .、自检）
 │   └── skills/
 │       └── README.md                  # 技能模板框架说明
 ├── .codebuddy/rules/                  # CodeBuddy 实际读取（从 shared 同步）
 │   ├── sync-convention/RULE.mdc
-│   └── dev-convention/RULE.mdc
+│   ├── dev-convention/RULE.mdc
+│   └── git-convention/RULE.mdc
 └── .cursor/rules/                     # Cursor 实际读取（从 shared 同步）
     ├── sync-convention.mdc
-    └── dev-convention.mdc
+    ├── dev-convention.mdc
+    └── git-convention.mdc
 ```
 
 ## 维护流程

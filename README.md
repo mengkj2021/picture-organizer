@@ -11,7 +11,7 @@ picture-organizer/
 ├── shared/                             # ★ AI 双工具配置唯一维护入口（项目说明 / prompts / rules）
 ├── .codebuddy/  .cursor/               # 规则实际读取目录（从 shared/rules 同步）
 ├── README.md                            # 本文档（文档入口 + 首次构建）
-└── 提交注意事项.md                       # Git 账号、编码、提交范围约定
+└── 提交注意事项.md                       # 仓库 onboarding（Git 账号 / 勿提交明细；AI 提交纪律见规则）
 ```
 
 仓库根是「文档 + AI 配置」层；**Android 工程整体位于 `android/`**（可独立打开与构建）。文档与代码的路径引用一律带 `android/` 前缀。
@@ -30,7 +30,7 @@ picture-organizer/
 | [docs/工程/改动清单.md](docs/工程/改动清单.md) | 开发台账（已完成注记 + 指向票库） |
 | [docs/工程/AI协作复盘-阶段一.md](docs/工程/AI协作复盘-阶段一.md) | AI 开发协作阶段复盘（成效 / 缺陷 / 起票衔接） |
 | [docs/日志/](docs/日志/) | 按日开发日志 |
-| [提交注意事项.md](提交注意事项.md) | Git 账号、编码、提交范围约定 |
+| [提交注意事项.md](提交注意事项.md) | 仓库 onboarding：Git 账号 / 勿提交明细 / Gradle 发行包（AI 提交纪律见 [shared/rules/git-convention.md](shared/rules/git-convention.md)） |
 | [shared/prompts/](shared/prompts/) | 拉入对话执行的提示词（功能开发 / 式样问答 / 文档整理） |
 
 ## 当前进度
