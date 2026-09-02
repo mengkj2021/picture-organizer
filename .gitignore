@@ -1,8 +1,7 @@
 *.iml
 .gradle
 .kotlin
-/local.properties
-/.idea
+.idea
 .DS_Store
 build/
 /captures
@@ -11,7 +10,7 @@ build/
 local.properties
 
 # 本地 Gradle 发行包（约 130MB，超过 GitHub 100MB 单文件限制，不提交）
-gradle/wrapper/*.zip
+android/gradle/wrapper/*.zip
 
 # 敏感 / 辅助文件（防御性忽略）
 *.jks

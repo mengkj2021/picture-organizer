@@ -6,7 +6,12 @@
 
 ```
 图片整理/
-├── shared/                            # ★ 唯一维护入口（改动都从这里开始）
+├── android/                           # ★ Android 工程（Gradle root，独立构建 / Android Studio 打开此目录）
+│   ├── app/                           # app 模块（Kotlin 业务、Compose UI）
+│   ├── build.gradle.kts               # 工程构建配置
+│   ├── settings.gradle.kts / gradle.properties / gradlew
+│   └── gradle/                        # wrapper（+ 本地 zip 不提交）与 libs.versions.toml
+├── shared/                            # ★ AI 配置唯一维护入口（改动都从这里开始）
 │   ├── README.md                      # 项目说明（CodeBuddy / Cursor 共用一份）
 │   ├── prompts/                       # 拉入对话执行的提示词模板
 │   │   ├── README.md
@@ -67,12 +72,12 @@
 - 规则正文使用 UTF-8 编码保存，避免中文乱码
 - 工具通过规则文件获知项目说明位置，实际内容以本文件为准
 
-## 首次构建（Android 工程）
+## 首次构建（Android 工程位于 `android/`）
 
-Gradle Wrapper 使用本地 `gradle-9.7.1-bin.zip`（相对路径，不提交 Git）。克隆后需自行放置该 zip 到 `gradle/wrapper/` 目录（与 `gradle-wrapper.properties` 同级），或临时将 `gradle/wrapper/gradle-wrapper.properties` 的 `distributionUrl` 改为官方 URL：
+Gradle Wrapper 使用本地 `gradle-9.7.1-bin.zip`（相对路径，不提交 Git）。克隆后需自行放置该 zip 到 `android/gradle/wrapper/` 目录（与 `gradle-wrapper.properties` 同级），或临时将 `android/gradle/wrapper/gradle-wrapper.properties` 的 `distributionUrl` 改为官方 URL：
 
 ```
 https://services.gradle.org/distributions/gradle-9.7.1-bin.zip
 ```
 
-项目路径含中文时，`gradle.properties` 中 `android.overridePathCheck=true` 为必需项；迁移至纯 ASCII 路径后可移除。详见根目录 [README.md](../README.md)。
+项目路径含中文时，`android/gradle.properties` 中 `android.overridePathCheck=true` 为必需项；迁移至纯 ASCII 路径后可移除。详见根目录 [README.md](../README.md)。
