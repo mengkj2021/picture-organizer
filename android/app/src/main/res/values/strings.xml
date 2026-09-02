@@ -26,6 +26,7 @@
     <string name="move_to_confirmed">已确认</string>
     <string name="move_to_no_modify">不修改</string>
     <string name="import_title">导入图片</string>
+    <string name="import_duplicate_hint">提示：同一张图片重复导入会生成另一条记录（算作不同图片），不会去重覆盖。</string>
     <string name="import_from_gallery">从相册选择</string>
     <string name="import_from_files">从文件选择</string>
     <string name="import_compress_switch">按规则压缩</string>

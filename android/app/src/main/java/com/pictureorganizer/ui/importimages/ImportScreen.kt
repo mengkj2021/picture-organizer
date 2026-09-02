@@ -80,10 +80,8 @@ fun ImportScreen(
         }
     }
 
-    BackHandler {
-        if (!state.isImporting) {
-            onBack()
-        }
+    BackHandler(enabled = !state.isImporting) {
+        onBack()
     }
 
     val galleryLauncher =
@@ -101,15 +99,16 @@ fun ImportScreen(
         }
 
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.import_title)) },
                 navigationIcon = {
                     IconButton(
-                        onClick = onBack,
-                        enabled = !state.isImporting,
+                        onClick = {
+                            if (!state.isImporting) onBack()
+                        },
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -134,6 +133,15 @@ fun ImportScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                Text(
+                    text = stringResource(R.string.import_duplicate_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,

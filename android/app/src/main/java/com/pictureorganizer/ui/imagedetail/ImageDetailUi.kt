@@ -9,7 +9,10 @@ data class ImageDetailUiState(
     val currentId: String = "",
     val current: ImageListItem? = null,
     val siblings: List<ImageListItem> = emptyList(),
-    val renameDraft: String = "",
+    /** 不含扩展名的主文件名草稿（F2） */
+    val renameStemDraft: String = "",
+    /** 只读扩展名，不含点；无扩展名时为空 */
+    val renameExtension: String = "",
     val tagDraft: String = "",
     /** null = 新增模式；非 null = 编辑自定义用户标签的下标（仅非库内标签） */
     val editingUserTagIndex: Int? = null,
@@ -28,6 +31,9 @@ sealed interface ImageDetailUiEvent {
     data class RenameDraftChanged(
         val value: String,
     ) : ImageDetailUiEvent
+
+    /** 重命名框失焦：若主名为空则恢复原名（F2） */
+    data object RenameFocusLost : ImageDetailUiEvent
 
     data object SaveRename : ImageDetailUiEvent
 

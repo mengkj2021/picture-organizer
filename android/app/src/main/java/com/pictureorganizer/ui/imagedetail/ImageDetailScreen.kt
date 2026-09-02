@@ -12,10 +12,15 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -53,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -112,8 +118,10 @@ fun ImageDetailScreen(
             item.filePath.substringAfterLast('/').ifEmpty { item.description }
         } ?: stringResource(R.string.detail_title)
 
+    // Bug2：Scaffold 不把 IME 算进整体高度，避免顶栏被顶出可视区；IME 只垫在内容区
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets.safeDrawing.exclude(WindowInsets.ime),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -147,7 +155,8 @@ fun ImageDetailScreen(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(innerPadding),
+                            .padding(innerPadding)
+                            .imePadding(),
                 ) {
                     if (current != null) {
                         ZoomableImage(
@@ -188,13 +197,28 @@ fun ImageDetailScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             OutlinedTextField(
-                                value = state.renameDraft,
+                                value = state.renameStemDraft,
                                 onValueChange = {
                                     viewModel.onEvent(ImageDetailUiEvent.RenameDraftChanged(it))
                                 },
-                                modifier = Modifier.weight(1f),
+                                modifier =
+                                    Modifier
+                                        .weight(1f)
+                                        .onFocusChanged { focus ->
+                                            if (!focus.isFocused) {
+                                                viewModel.onEvent(ImageDetailUiEvent.RenameFocusLost)
+                                            }
+                                        },
                                 singleLine = true,
                                 enabled = !state.isBusy,
+                                suffix = {
+                                    if (state.renameExtension.isNotEmpty()) {
+                                        Text(
+                                            text = ".${state.renameExtension}",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                },
                             )
                             Button(
                                 onClick = { viewModel.onEvent(ImageDetailUiEvent.SaveRename) },

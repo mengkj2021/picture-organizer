@@ -33,7 +33,7 @@
 
 - 顶部：`TopAppBar` + 返回
 - 主体：可滚动 Checkbox 列表
-- 底部：清除 / 应用
+- 底部：清除 / 应用（`navigationBarsPadding`，修复 Bug3 底栏被切）
 
 ## 6. 系统返回动作
 
@@ -65,3 +65,4 @@
 |---|---|---|
 | 2026-08-31 | 新建；主画面 Dialog 改为 navigate | 见开发日志 |
 | 2026-08-31 | C7 打包复用；文档去掉「后续 C7」措辞 | 见开发日志 |
+| 2026-09-02 | Bug3：bottomBar `navigationBarsPadding` | 见开发日志 |

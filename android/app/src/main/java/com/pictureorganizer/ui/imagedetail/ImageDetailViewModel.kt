@@ -8,6 +8,7 @@ import com.pictureorganizer.data.repository.ImageRepository
 import com.pictureorganizer.data.repository.RenameTemplateRepository
 import com.pictureorganizer.data.repository.TagRepository
 import com.pictureorganizer.model.ImageListItem
+import com.pictureorganizer.model.Tag
 import com.pictureorganizer.util.file.AppFileManager
 import com.pictureorganizer.util.file.RenamePatternApplier
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -80,13 +81,17 @@ class ImageDetailViewModel(
         ) { bundle, ed, isBusy, tagBundle ->
             val (id, item, siblings) = bundle
             val (libraryTags, templates, renameTemplates) = tagBundle
+            val fileName =
+                item?.fileNameFromPath()?.ifEmpty { item.description }.orEmpty()
+            val parts = splitFileName(fileName)
+            val stemDraft =
+                ed.renameStemDraft.takeIf { ed.renameTouched } ?: parts.stem
             ImageDetailUiState(
                 currentId = id,
                 current = item,
                 siblings = siblings,
-                renameDraft =
-                    ed.renameDraft.takeIf { ed.renameTouched }
-                        ?: (item?.fileNameFromPath() ?: item?.description.orEmpty()),
+                renameStemDraft = stemDraft,
+                renameExtension = parts.extension,
                 tagDraft = ed.tagDraft,
                 editingUserTagIndex = ed.editingUserTagIndex,
                 libraryTags = libraryTags,
@@ -108,8 +113,9 @@ class ImageDetailViewModel(
             is ImageDetailUiEvent.SelectSibling -> selectSibling(event.id)
             is ImageDetailUiEvent.RenameDraftChanged ->
                 editor.update {
-                    it.copy(renameDraft = event.value, renameTouched = true)
+                    it.copy(renameStemDraft = event.value, renameTouched = true)
                 }
+            ImageDetailUiEvent.RenameFocusLost -> restoreRenameStemIfBlank()
             ImageDetailUiEvent.SaveRename -> saveRename()
             is ImageDetailUiEvent.TagDraftChanged ->
                 editor.update {
@@ -143,18 +149,29 @@ class ImageDetailViewModel(
         }
     }
 
+    private fun restoreRenameStemIfBlank() {
+        if (!editor.value.renameTouched) return
+        if (editor.value.renameStemDraft.trim().isNotEmpty()) return
+        editor.update { it.copy(renameTouched = false, renameStemDraft = "") }
+    }
+
     private fun saveRename() {
         val id = currentId.value
-        val name =
-            editor.value.renameDraft
-                .trim()
-                .ifEmpty { uiState.value.renameDraft.trim() }
-        if (name.isEmpty()) {
+        val state = uiState.value
+        val stem = state.renameStemDraft.trim()
+        if (stem.isEmpty()) {
             viewModelScope.launch {
                 _effects.send(ImageDetailUiEffect.ShowMessage(R.string.detail_rename_empty))
             }
             return
         }
+        // F2：强制保留原扩展名，不允许通过输入改后缀
+        val name =
+            if (state.renameExtension.isEmpty()) {
+                stem
+            } else {
+                "$stem.${state.renameExtension}"
+            }
         viewModelScope.launch {
             busy.value = true
             runCatching { repository.rename(id, name) }
@@ -201,7 +218,7 @@ class ImageDetailViewModel(
             }
             userTags.add(draft)
         }
-        persistTags(item, userTags, clearEditor = true)
+        persistTags(item, userTags, clearEditor = true, ensureLibraryNames = listOf(draft))
     }
 
     private fun deleteTag(userTagIndex: Int) {
@@ -250,15 +267,19 @@ class ImageDetailViewModel(
     private fun applyRenameTemplate(templateId: String) {
         val item = uiState.value.current ?: return
         val template = uiState.value.renameTemplates.find { it.id == templateId } ?: return
-        val currentName =
-            uiState.value.renameDraft.ifBlank {
-                item.fileNameFromPath().ifBlank { item.description }
-            }
-        val next = RenamePatternApplier.applyForItem(template.pattern, item, currentName)
-        editor.update { it.copy(renameDraft = next, renameTouched = true) }
+        val currentFull =
+            buildFullFileName(uiState.value.renameStemDraft, uiState.value.renameExtension)
+                .ifBlank {
+                    item.fileNameFromPath().ifBlank { item.description }
+                }
+        val next = RenamePatternApplier.applyForItem(template.pattern, item, currentFull)
+        // F2：套用模板后仍锁定原扩展名
+        val locked = lockExtension(next, uiState.value.renameExtension)
+        val stem = splitFileName(locked).stem
+        editor.update { it.copy(renameStemDraft = stem, renameTouched = true) }
         viewModelScope.launch {
             busy.value = true
-            runCatching { repository.rename(item.id, next) }
+            runCatching { repository.rename(item.id, locked) }
                 .onSuccess {
                     editor.update { it.copy(renameTouched = false) }
                     _effects.send(ImageDetailUiEffect.ShowMessage(R.string.detail_rename_ok))
@@ -275,16 +296,21 @@ class ImageDetailViewModel(
         item: ImageListItem,
         userTags: List<String>,
         clearEditor: Boolean,
+        ensureLibraryNames: List<String> = emptyList(),
     ) {
         // S1：userTags 即用户标签清单，状态不写入 tagsJson
         viewModelScope.launch {
             busy.value = true
             runCatching { repository.updateTags(item.id, userTags) }
                 .onSuccess { exifOk ->
+                    // S2：添加成功后写入标签库（已存在则跳过）
+                    ensureLibraryNames.forEach { raw ->
+                        ensureTagInLibrary(raw)
+                    }
                     if (clearEditor) {
                         editor.value =
                             EditorState(
-                                renameDraft = editor.value.renameDraft,
+                                renameStemDraft = editor.value.renameStemDraft,
                                 renameTouched = editor.value.renameTouched,
                             )
                     }
@@ -302,8 +328,23 @@ class ImageDetailViewModel(
         }
     }
 
+    private suspend fun ensureTagInLibrary(name: String) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty() || trimmed in ImageListItem.STATUS_TAGS) return
+        val exists = tagRepository.getTags().any { it.name == trimmed }
+        if (exists) return
+        runCatching {
+            tagRepository.insertTag(
+                Tag(
+                    id = "",
+                    name = trimmed,
+                ),
+            )
+        }
+    }
+
     private data class EditorState(
-        val renameDraft: String = "",
+        val renameStemDraft: String = "",
         val renameTouched: Boolean = false,
         val tagDraft: String = "",
         val editingUserTagIndex: Int? = null,
@@ -331,4 +372,39 @@ class ImageDetailViewModel(
 private fun ImageListItem.fileNameFromPath(): String {
     if (filePath.isNotEmpty()) return filePath.substringAfterLast('/')
     return description
+}
+
+private data class FileNameParts(
+    val stem: String,
+    val extension: String,
+)
+
+private fun splitFileName(fileName: String): FileNameParts {
+    val trimmed = fileName.trim()
+    if (trimmed.isEmpty()) return FileNameParts("", "")
+    val dot = trimmed.lastIndexOf('.')
+    if (dot <= 0 || dot == trimmed.lastIndex) {
+        return FileNameParts(trimmed, "")
+    }
+    return FileNameParts(
+        stem = trimmed.substring(0, dot),
+        extension = trimmed.substring(dot + 1),
+    )
+}
+
+private fun buildFullFileName(
+    stem: String,
+    extension: String,
+): String {
+    val s = stem.trim()
+    if (s.isEmpty()) return ""
+    return if (extension.isEmpty()) s else "$s.$extension"
+}
+
+private fun lockExtension(
+    requested: String,
+    lockedExtension: String,
+): String {
+    val stem = splitFileName(requested.trim()).stem.ifBlank { requested.trim() }
+    return buildFullFileName(stem, lockedExtension).ifBlank { requested.trim() }
 }
