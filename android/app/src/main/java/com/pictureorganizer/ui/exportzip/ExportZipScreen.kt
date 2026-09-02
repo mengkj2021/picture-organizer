@@ -100,6 +100,8 @@ fun ExportZipScreen(
         buildList {
             addAll(state.filter.selectedTagNames.sorted())
             if (state.filter.includeUntagged) add(untaggedLabel)
+            val q = state.filter.nameContains.trim()
+            if (q.isNotEmpty()) add(stringResource(R.string.filter_name_contains) + ": $q")
         }
 
     Scaffold(

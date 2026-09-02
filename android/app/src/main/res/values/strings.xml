@@ -15,6 +15,12 @@
     <string name="action_delete">删除</string>
     <string name="action_filter">筛选</string>
     <string name="action_filter_clear">清除筛选</string>
+    <string name="action_more">更多</string>
+    <string name="filter_name_contains">文件名包含</string>
+    <string name="filter_sort_label">排序</string>
+    <string name="filter_sort_imported_desc">导入日期（新→旧）</string>
+    <string name="filter_sort_imported_asc">导入日期（旧→新）</string>
+    <string name="filter_sort_name_asc">文件名（A→Z）</string>
     <string name="filter_title">筛选</string>
     <string name="filter_untagged">未打标签</string>
     <string name="filter_apply">应用</string>

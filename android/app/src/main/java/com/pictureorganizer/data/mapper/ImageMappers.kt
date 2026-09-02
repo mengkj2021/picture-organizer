@@ -46,6 +46,7 @@ fun ImageEntity.toListItem(): ImageListItem {
             ],
         status = statusEnum,
         filePath = filePath,
+        importedAt = importedAt,
     )
 }
 

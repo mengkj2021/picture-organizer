@@ -10,7 +10,7 @@ object Routes {
     const val IMAGE_DETAIL = "image-detail/{imageId}"
     const val SETTINGS = "settings"
     const val TAG_MANAGE = "tag-manage"
-    const val FILTER = "filter?tags={tags}&untagged={untagged}"
+    const val FILTER = "filter?tags={tags}&untagged={untagged}&q={q}&sort={sort}"
     const val TUTORIAL = "tutorial?fromSettings={fromSettings}"
     const val RENAME_TEMPLATE_MANAGE = "rename-template-manage"
     const val DEFAULT_TAGS = "default-tags"
@@ -20,7 +20,8 @@ object Routes {
 
     fun filter(criteria: TagFilterCriteria = TagFilterCriteria()): String {
         val tags = Uri.encode(criteria.encodeTagsParam())
-        return "filter?tags=$tags&untagged=${criteria.includeUntagged}"
+        val q = Uri.encode(criteria.nameContains)
+        return "filter?tags=$tags&untagged=${criteria.includeUntagged}&q=$q&sort=${criteria.sort.name}"
     }
 
     fun tutorial(fromSettings: Boolean = false): String = "tutorial?fromSettings=$fromSettings"

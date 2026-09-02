@@ -72,6 +72,8 @@ fun MainScreen(
         buildList {
             addAll(state.selectedTagNames.sorted())
             if (state.includeUntagged) add(untaggedLabel)
+            val q = state.nameContains.trim()
+            if (q.isNotEmpty()) add(stringResource(R.string.filter_name_contains) + ": $q")
         }
 
     Scaffold(
@@ -132,12 +134,7 @@ fun MainScreen(
             onDeleteClick = { viewModel.onEvent(MainUiEvent.DeleteSelected) },
             onToggleSelect = { viewModel.onEvent(MainUiEvent.ToggleSelect(it)) },
             onFilterClick = {
-                onNavigateToFilter(
-                    TagFilterCriteria(
-                        selectedTagNames = state.selectedTagNames,
-                        includeUntagged = state.includeUntagged,
-                    ),
-                )
+                onNavigateToFilter(state.filter)
             },
             onClearFilter = { viewModel.onEvent(MainUiEvent.ClearTagFilter) },
             onExportClick = onNavigateToExportZip,

@@ -8,7 +8,8 @@ import com.pictureorganizer.data.repository.ImageRepository
 import com.pictureorganizer.model.ImageListItem
 import com.pictureorganizer.model.ImageStatus
 import com.pictureorganizer.model.TagFilterCriteria
-import com.pictureorganizer.model.matchesTagFilter
+import com.pictureorganizer.model.matchesFilter
+import com.pictureorganizer.model.sortedByFilter
 import com.pictureorganizer.util.file.AppFileManager
 import com.pictureorganizer.util.file.ZipExporter
 import kotlinx.coroutines.Dispatchers
@@ -43,9 +44,9 @@ class ExportZipViewModel(
             session,
         ) { items, filter, sess ->
             val matched =
-                items.filter {
-                    it.matchesTagFilter(filter.selectedTagNames, filter.includeUntagged)
-                }
+                items
+                    .filter { it.matchesFilter(filter) }
+                    .sortedByFilter(filter.sort)
             ExportZipUiState(
                 filter = filter,
                 confirmedCount = items.size,
@@ -100,12 +101,9 @@ class ExportZipViewModel(
                     val all = imageRepository.getItems(ImageStatus.Confirmed)
                     val filter = filterState.value
                     val matched =
-                        all.filter {
-                            it.matchesTagFilter(
-                                filter.selectedTagNames,
-                                filter.includeUntagged,
-                            )
-                        }
+                        all
+                            .filter { it.matchesFilter(filter) }
+                            .sortedByFilter(filter.sort)
                     val groups = buildGroups(matched, filter)
                     if (groups.isEmpty()) {
                         error("没有可打包的图片")

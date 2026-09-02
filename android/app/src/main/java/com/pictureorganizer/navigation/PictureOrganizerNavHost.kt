@@ -103,10 +103,16 @@ fun PictureOrganizerNavHost() {
                 if (!filterApplied) return@LaunchedEffect
                 val tagsRaw = entry.savedStateHandle.get<String>(FilterResultKeys.TAGS).orEmpty()
                 val untagged = entry.savedStateHandle.get<Boolean>(FilterResultKeys.UNTAGGED) ?: false
+                val q = entry.savedStateHandle.get<String>(FilterResultKeys.NAME_CONTAINS).orEmpty()
+                val sortRaw = entry.savedStateHandle.get<String>(FilterResultKeys.SORT)
                 mainViewModel.onEvent(
                     MainUiEvent.SetTagFilter(
-                        selectedTagNames = TagFilterCriteria.parseTagsParam(tagsRaw),
-                        includeUntagged = untagged,
+                        TagFilterCriteria(
+                            selectedTagNames = TagFilterCriteria.parseTagsParam(tagsRaw),
+                            includeUntagged = untagged,
+                            nameContains = q,
+                            sort = com.pictureorganizer.model.ImageListSort.fromParam(sortRaw),
+                        ),
                     ),
                 )
                 entry.savedStateHandle[FilterResultKeys.APPLIED] = false
@@ -144,11 +150,15 @@ fun PictureOrganizerNavHost() {
                 if (!filterApplied) return@LaunchedEffect
                 val tagsRaw = entry.savedStateHandle.get<String>(FilterResultKeys.TAGS).orEmpty()
                 val untagged = entry.savedStateHandle.get<Boolean>(FilterResultKeys.UNTAGGED) ?: false
+                val q = entry.savedStateHandle.get<String>(FilterResultKeys.NAME_CONTAINS).orEmpty()
+                val sortRaw = entry.savedStateHandle.get<String>(FilterResultKeys.SORT)
                 exportVm.onEvent(
                     ExportZipUiEvent.SetFilter(
                         TagFilterCriteria(
                             selectedTagNames = TagFilterCriteria.parseTagsParam(tagsRaw),
                             includeUntagged = untagged,
+                            nameContains = q,
+                            sort = com.pictureorganizer.model.ImageListSort.fromParam(sortRaw),
                         ),
                     ),
                 )
@@ -230,14 +240,29 @@ fun PictureOrganizerNavHost() {
                         type = NavType.BoolType
                         defaultValue = false
                     },
+                    navArgument("q") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument("sort") {
+                        type = NavType.StringType
+                        defaultValue = com.pictureorganizer.model.ImageListSort.ImportedAtDesc.name
+                    },
                 ),
         ) { entry ->
             val tagsRaw = Uri.decode(entry.arguments?.getString("tags").orEmpty())
             val untagged = entry.arguments?.getBoolean("untagged") ?: false
+            val q = Uri.decode(entry.arguments?.getString("q").orEmpty())
+            val sort =
+                com.pictureorganizer.model.ImageListSort.fromParam(
+                    entry.arguments?.getString("sort"),
+                )
             val initial =
                 TagFilterCriteria(
                     selectedTagNames = TagFilterCriteria.parseTagsParam(tagsRaw),
                     includeUntagged = untagged,
+                    nameContains = q,
+                    sort = sort,
                 )
             val filterViewModel: FilterViewModel =
                 viewModel(
@@ -250,6 +275,8 @@ fun PictureOrganizerNavHost() {
                     navController.previousBackStackEntry?.savedStateHandle?.apply {
                         set(FilterResultKeys.TAGS, criteria.encodeTagsParam())
                         set(FilterResultKeys.UNTAGGED, criteria.includeUntagged)
+                        set(FilterResultKeys.NAME_CONTAINS, criteria.nameContains)
+                        set(FilterResultKeys.SORT, criteria.sort.name)
                         set(FilterResultKeys.APPLIED, true)
                     }
                     navController.popBackStack()

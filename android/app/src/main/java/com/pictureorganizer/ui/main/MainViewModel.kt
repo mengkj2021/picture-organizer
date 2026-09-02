@@ -5,9 +5,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pictureorganizer.data.repository.ImageRepository
 import com.pictureorganizer.data.repository.TagRepository
-import com.pictureorganizer.model.ImageListItem
+import com.pictureorganizer.model.ImageListSort
 import com.pictureorganizer.model.ImageStatus
-import com.pictureorganizer.model.matchesTagFilter
+import com.pictureorganizer.model.TagFilterCriteria
+import com.pictureorganizer.model.matchesFilter
+import com.pictureorganizer.model.sortedByFilter
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,10 +44,17 @@ class MainViewModel(
                     MainTab.Confirmed -> confirmed
                     MainTab.NoModify -> noModify
                 }
+            val criteria =
+                TagFilterCriteria(
+                    selectedTagNames = tabFilter.selectedTagNames,
+                    includeUntagged = tabFilter.includeUntagged,
+                    nameContains = tabFilter.nameContains,
+                    sort = tabFilter.sort,
+                )
             val filtered =
-                source.filter {
-                    it.matchesTagFilter(tabFilter.selectedTagNames, tabFilter.includeUntagged)
-                }
+                source
+                    .filter { it.matchesFilter(criteria) }
+                    .sortedByFilter(criteria.sort)
             val totalCount = filtered.size
             val totalPages = max(1, (totalCount + MAIN_PAGE_SIZE - 1) / MAIN_PAGE_SIZE)
             val pageIndex = tabFilter.pageIndex.coerceIn(0, totalPages - 1)
@@ -59,8 +68,7 @@ class MainViewModel(
                 isEditMode = ui.isEditMode,
                 selectedIds = ui.selectedIds,
                 availableTags = tags.map { it.name },
-                selectedTagNames = tabFilter.selectedTagNames,
-                includeUntagged = tabFilter.includeUntagged,
+                filter = criteria,
                 pageItems = pageItems,
                 pageIndex = pageIndex,
                 totalCount = totalCount,
@@ -81,7 +89,7 @@ class MainViewModel(
             is MainUiEvent.MoveSelectedTo -> moveSelectedTo(event.status)
             MainUiEvent.ImportImages -> navigateToImport()
             MainUiEvent.DeleteSelected -> deleteSelected()
-            is MainUiEvent.SetTagFilter -> setTagFilter(event.selectedTagNames, event.includeUntagged)
+            is MainUiEvent.SetTagFilter -> setTagFilter(event.criteria)
             MainUiEvent.ClearTagFilter -> clearTagFilter()
             MainUiEvent.PrevPage -> changePage(-1)
             MainUiEvent.NextPage -> changePage(1)
@@ -128,25 +136,24 @@ class MainViewModel(
         listUiState.value = current.copy(selectedIds = newIds)
     }
 
-    private fun setTagFilter(
-        selectedTagNames: Set<String>,
-        includeUntagged: Boolean,
-    ) {
+    private fun setTagFilter(criteria: TagFilterCriteria) {
         val current = listUiState.value
         listUiState.value =
             current
                 .withFilter(
                     current.selectedTab,
                     TabFilterState(
-                        selectedTagNames = selectedTagNames,
-                        includeUntagged = includeUntagged,
+                        selectedTagNames = criteria.selectedTagNames,
+                        includeUntagged = criteria.includeUntagged,
+                        nameContains = criteria.nameContains,
+                        sort = criteria.sort,
                         pageIndex = 0,
                     ),
                 ).copy(selectedIds = emptySet())
     }
 
     private fun clearTagFilter() {
-        setTagFilter(emptySet(), includeUntagged = false)
+        setTagFilter(TagFilterCriteria())
     }
 
     private fun changePage(delta: Int) {
@@ -204,6 +211,8 @@ class MainViewModel(
     private data class TabFilterState(
         val selectedTagNames: Set<String> = emptySet(),
         val includeUntagged: Boolean = false,
+        val nameContains: String = "",
+        val sort: ImageListSort = ImageListSort.ImportedAtDesc,
         val pageIndex: Int = 0,
     )
 
@@ -240,5 +249,4 @@ class MainViewModel(
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T = MainViewModel(repository, tagRepository) as T
     }
-
 }

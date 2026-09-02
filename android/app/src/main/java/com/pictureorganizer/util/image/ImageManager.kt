@@ -22,6 +22,7 @@ data class PreparedImage(
 /**
  * 图片读取与按阈值压缩。
  * 临时阈值：文件 > 2MB 或长边 > 1920px → JPEG 质量 85。
+ * F1：落盘名取自 DISPLAY_NAME，主名清洗并截断 ≤40，冲突加短后缀。
  */
 class ImageManager(
     private val context: Context,
@@ -42,22 +43,23 @@ class ImageManager(
                         bounds.height > MAX_LONG_EDGE
                 )
 
+        val displayName = displayNameOf(uri)
         if (!needsCompress) {
-            val ext = guessExtension(uri)
-            val plainName = "$id.$ext"
-            val plainFile = fileManager.createDestFile(ImageStatus.Pending, plainName)
+            val ext = extensionFromDisplayName(displayName) ?: guessExtension(uri)
+            val destName = allocateDestName(displayName, ext, id)
+            val plainFile = fileManager.createDestFile(ImageStatus.Pending, destName)
             fileManager.copyFromUri(uri, plainFile)
             return PreparedImage(
                 id = id,
-                filePath = fileManager.relativePath(ImageStatus.Pending, plainName),
-                fileName = plainName,
+                filePath = fileManager.relativePath(ImageStatus.Pending, destName),
+                fileName = destName,
                 width = bounds.width,
                 height = bounds.height,
                 compressed = false,
             )
         }
 
-        val destName = "$id.jpg"
+        val destName = allocateDestName(displayName, "jpg", id)
         val destFile = fileManager.createDestFile(ImageStatus.Pending, destName)
         compressToFile(uri, destFile, bounds)
 
@@ -71,6 +73,54 @@ class ImageManager(
             height = outBounds.outHeight,
             compressed = true,
         )
+    }
+
+    /** F1：生成不冲突的落盘文件名（主名≤[MAX_STEM_CHARS]） */
+    private fun allocateDestName(
+        displayName: String,
+        extension: String,
+        id: String,
+    ): String {
+        val stem = sanitizeAndTruncateStem(stemFromDisplayName(displayName))
+        val ext = extension.trim().lowercase().ifBlank { "jpg" }
+        val shortId = id.replace("-", "").take(8)
+        val candidate = "$stem.$ext"
+        val dest = fileManager.createDestFile(ImageStatus.Pending, candidate)
+        if (!dest.exists()) return candidate
+        return "${stem}_$shortId.$ext"
+    }
+
+    private fun stemFromDisplayName(displayName: String): String {
+        val trimmed = displayName.trim()
+        if (trimmed.isEmpty()) return "image"
+        val dot = trimmed.lastIndexOf('.')
+        return if (dot > 0) trimmed.substring(0, dot) else trimmed
+    }
+
+    private fun extensionFromDisplayName(displayName: String): String? {
+        val trimmed = displayName.trim()
+        val dot = trimmed.lastIndexOf('.')
+        if (dot <= 0 || dot == trimmed.lastIndex) return null
+        val ext = trimmed.substring(dot + 1).lowercase()
+        return ext.takeIf { it.matches(Regex("[a-z0-9]{1,8}")) }
+    }
+
+    private fun sanitizeAndTruncateStem(raw: String): String {
+        val cleaned =
+            buildString(raw.length) {
+                for (ch in raw) {
+                    when {
+                        ch.isLetterOrDigit() -> append(ch)
+                        ch in "._- " || ch.code > 127 -> append(if (ch == ' ') '_' else ch)
+                        else -> append('_')
+                    }
+                }
+            }.trim('_', '.', ' ')
+                .ifBlank { "image" }
+        return cleaned
+            .take(MAX_STEM_CHARS)
+            .trimEnd('_', '.', ' ')
+            .ifBlank { "image" }
     }
 
     private fun decodeBounds(uri: Uri): Bounds {
@@ -175,5 +225,6 @@ class ImageManager(
         const val MAX_BYTES = 2L * 1024L * 1024L
         const val MAX_LONG_EDGE = 1920
         const val JPEG_QUALITY = 85
+        const val MAX_STEM_CHARS = 40
     }
 }

@@ -33,6 +33,8 @@ class FilterViewModel(
                 availableTags = tags.map { it.name },
                 selectedTagNames = criteria.selectedTagNames,
                 includeUntagged = criteria.includeUntagged,
+                nameContains = criteria.nameContains,
+                sort = criteria.sort,
             )
         }.stateIn(
             scope = viewModelScope,
@@ -41,6 +43,8 @@ class FilterViewModel(
                 FilterUiState(
                     selectedTagNames = initialCriteria.selectedTagNames,
                     includeUntagged = initialCriteria.includeUntagged,
+                    nameContains = initialCriteria.nameContains,
+                    sort = initialCriteria.sort,
                 ),
         )
 
@@ -59,6 +63,12 @@ class FilterViewModel(
             }
             FilterUiEvent.ToggleUntagged -> {
                 draft.update { it.copy(includeUntagged = !it.includeUntagged) }
+            }
+            is FilterUiEvent.NameContainsChanged -> {
+                draft.update { it.copy(nameContains = event.value) }
+            }
+            is FilterUiEvent.SortChanged -> {
+                draft.update { it.copy(sort = event.sort) }
             }
             FilterUiEvent.Apply -> {
                 viewModelScope.launch {

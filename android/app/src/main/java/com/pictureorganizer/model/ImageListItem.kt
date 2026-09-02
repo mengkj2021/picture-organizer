@@ -10,6 +10,8 @@ data class ImageListItem(
     val status: ImageStatus,
     /** 相对 `filesDir/images/` 的路径，如 `pending/xxx.jpg` */
     val filePath: String = "",
+    /** 导入时间毫秒（F6 排序） */
+    val importedAt: Long = 0L,
 ) {
     fun withStatus(newStatus: ImageStatus): ImageListItem =
         copy(

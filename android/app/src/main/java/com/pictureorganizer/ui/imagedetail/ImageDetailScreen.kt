@@ -151,6 +151,9 @@ fun ImageDetailScreen(
             }
             else -> {
                 val current = state.current
+                var forceShowEditor by remember(state.currentId) { mutableStateOf(false) }
+                var imageScaled by remember(state.currentId) { mutableStateOf(false) }
+                val showEditor = !imageScaled || forceShowEditor
                 Column(
                     modifier =
                         Modifier
@@ -163,6 +166,15 @@ fun ImageDetailScreen(
                             file = viewModel.absoluteFile(current),
                             placeholderColor = Color(current.placeholderColorArgb),
                             contentKey = current.id,
+                            onScaledChanged = { scaled ->
+                                imageScaled = scaled
+                                if (!scaled) forceShowEditor = false
+                            },
+                            onSingleTap = {
+                                if (imageScaled) {
+                                    forceShowEditor = !forceShowEditor
+                                }
+                            },
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
@@ -180,6 +192,7 @@ fun ImageDetailScreen(
                         }
                     }
 
+                    if (showEditor) {
                     Column(
                         modifier =
                             Modifier
@@ -408,6 +421,7 @@ fun ImageDetailScreen(
                             }
                         }
                     }
+                    }
 
                     SiblingThumbStrip(
                         siblings = state.siblings,
@@ -431,11 +445,17 @@ private fun ZoomableImage(
     file: File,
     placeholderColor: Color,
     contentKey: String,
+    onScaledChanged: (Boolean) -> Unit,
+    onSingleTap: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var scale by remember(contentKey) { mutableFloatStateOf(1f) }
     var offset by remember(contentKey) { mutableStateOf(Offset.Zero) }
     val context = LocalContext.current
+
+    LaunchedEffect(scale > 1f) {
+        onScaledChanged(scale > 1f)
+    }
 
     Box(
         modifier =
@@ -449,6 +469,7 @@ private fun ZoomableImage(
                 }
                 .pointerInput(contentKey) {
                     detectTapGestures(
+                        onTap = { onSingleTap() },
                         onDoubleTap = {
                             scale = 1f
                             offset = Offset.Zero

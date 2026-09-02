@@ -1,6 +1,7 @@
 package com.pictureorganizer.ui.main.tab
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenu
@@ -49,6 +51,7 @@ fun TabActionBar(
     modifier: Modifier = Modifier,
 ) {
     var moveMenuExpanded by remember { mutableStateOf(false) }
+    var moreMenuExpanded by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -72,34 +75,30 @@ fun TabActionBar(
                         },
                     )
                 }
-                TextButton(
-                    onClick = onSelectAllClick,
-                    enabled = isEditMode,
-                ) {
-                    Text(stringResource(R.string.action_select_all))
-                }
-                TextButton(
-                    onClick = { moveMenuExpanded = true },
-                    enabled = isEditMode && hasSelection,
-                ) {
-                    Text(stringResource(R.string.action_move_to))
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = null,
-                    )
-                }
-                DropdownMenu(
-                    expanded = moveMenuExpanded,
-                    onDismissRequest = { moveMenuExpanded = false },
-                ) {
-                    moveTargets(currentTab).forEach { target ->
-                        DropdownMenuItem(
-                            text = { Text(moveTargetLabel(target)) },
-                            onClick = {
-                                moveMenuExpanded = false
-                                onMoveTo(target)
-                            },
+                if (isEditMode) {
+                    TextButton(
+                        onClick = { moveMenuExpanded = true },
+                        enabled = hasSelection,
+                    ) {
+                        Text(stringResource(R.string.action_move_to))
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = null,
                         )
+                    }
+                    DropdownMenu(
+                        expanded = moveMenuExpanded,
+                        onDismissRequest = { moveMenuExpanded = false },
+                    ) {
+                        moveTargets(currentTab).forEach { target ->
+                            DropdownMenuItem(
+                                text = { Text(moveTargetLabel(target)) },
+                                onClick = {
+                                    moveMenuExpanded = false
+                                    onMoveTo(target)
+                                },
+                            )
+                        }
                     }
                 }
                 IconButton(onClick = onFilterClick) {
@@ -107,6 +106,38 @@ fun TabActionBar(
                         imageVector = Icons.Default.Search,
                         contentDescription = stringResource(R.string.action_filter),
                     )
+                }
+                // F5：全选 / 删除等次要操作进溢出菜单
+                Box {
+                    IconButton(onClick = { moreMenuExpanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = stringResource(R.string.action_more),
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = moreMenuExpanded,
+                        onDismissRequest = { moreMenuExpanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_select_all)) },
+                            enabled = isEditMode,
+                            onClick = {
+                                moreMenuExpanded = false
+                                onSelectAllClick()
+                            },
+                        )
+                        if (currentTab == MainTab.NoModify) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_delete)) },
+                                enabled = isEditMode && hasSelection,
+                                onClick = {
+                                    moreMenuExpanded = false
+                                    onDeleteClick()
+                                },
+                            )
+                        }
+                    }
                 }
             }
 
@@ -117,12 +148,7 @@ fun TabActionBar(
                     }
                 }
                 MainTab.NoModify -> {
-                    TextButton(
-                        onClick = onDeleteClick,
-                        enabled = isEditMode && hasSelection,
-                    ) {
-                        Text(stringResource(R.string.action_delete))
-                    }
+                    // 删除已收入「更多」
                 }
                 MainTab.Confirmed -> {
                     TextButton(onClick = onExportClick) {

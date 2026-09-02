@@ -1,6 +1,7 @@
 package com.pictureorganizer.ui.main
 
 import com.pictureorganizer.model.ImageStatus
+import com.pictureorganizer.model.TagFilterCriteria
 
 sealed interface MainUiEvent {
     data class SelectTab(
@@ -24,8 +25,7 @@ sealed interface MainUiEvent {
     data object DeleteSelected : MainUiEvent
 
     data class SetTagFilter(
-        val selectedTagNames: Set<String>,
-        val includeUntagged: Boolean,
+        val criteria: TagFilterCriteria,
     ) : MainUiEvent
 
     data object ClearTagFilter : MainUiEvent
