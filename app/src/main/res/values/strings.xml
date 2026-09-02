@@ -63,7 +63,7 @@
     <string name="detail_tag_cancel">取消</string>
     <string name="detail_tag_empty">标签不能为空</string>
     <string name="detail_tag_exists">标签已存在</string>
-    <string name="detail_tag_reserved">不能使用状态标签名</string>
+    <string name="detail_tag_reserved">状态名不能用作标签（待处理 / 已确认 / 不修改）</string>
     <string name="detail_tags_ok">标签已保存</string>
     <string name="detail_exif_warn">标签已写入数据库，但文件 Exif 未写入</string>
     <string name="detail_tag_library">标签库</string>

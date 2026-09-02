@@ -2,7 +2,6 @@ package com.pictureorganizer.data.repository
 
 import com.pictureorganizer.data.local.converter.Converters
 import com.pictureorganizer.data.local.dao.ImageDao
-import com.pictureorganizer.data.mapper.tagsForStatus
 import com.pictureorganizer.data.mapper.toEntity
 import com.pictureorganizer.data.mapper.toListItem
 import com.pictureorganizer.data.mapper.toStorage
@@ -79,7 +78,8 @@ class RoomImageRepository(
         fileName: String,
         importedAt: Long,
     ) {
-        val withTags = item.copy(tags = tagsForStatus(item.status, item.tags), filePath = filePath)
+        // S1：tags 仅存用户标签（清洗兜底），状态由 item.status 表达
+        val withTags = item.copy(tags = ImageListItem.userTagsOf(item.tags), filePath = filePath)
         imageDao.insert(withTags.toEntity(filePath, fileName, importedAt))
     }
 
@@ -107,11 +107,8 @@ class RoomImageRepository(
     ): Boolean =
         withContext(Dispatchers.IO) {
             val entity = imageDao.findById(id) ?: error("图片不存在")
-            val status =
-                runCatching {
-                    ImageStatus.valueOf(entity.status)
-                }.getOrDefault(ImageStatus.Pending)
-            val normalized = tagsForStatus(status, tags)
+            // S1：只存用户标签，不注入状态标签
+            val normalized = ImageListItem.userTagsOf(tags)
             imageDao.insert(
                 entity.copy(tagsJson = converters.toTagsJson(normalized)),
             )
@@ -124,7 +121,21 @@ class RoomImageRepository(
             fileManager.ensureAllDirs()
             val all = imageDao.getAll()
             for (entity in all) {
-                if (entity.filePath.contains('/')) continue
+                // S1 存量清洗：剔除 tagsJson 中残留的状态词（幂等；无残留则保持原串）
+                val existingTags = converters.fromTagsJson(entity.tagsJson)
+                val cleanTags = ImageListItem.userTagsOf(existingTags)
+                val cleanJson =
+                    if (cleanTags == existingTags) {
+                        entity.tagsJson
+                    } else {
+                        converters.toTagsJson(cleanTags)
+                    }
+                if (entity.filePath.contains('/')) {
+                    if (cleanJson != entity.tagsJson) {
+                        imageDao.insert(entity.copy(tagsJson = cleanJson))
+                    }
+                    continue
+                }
                 val status =
                     runCatching {
                         ImageStatus.valueOf(entity.status)
@@ -139,8 +150,8 @@ class RoomImageRepository(
                         flat.delete()
                     }
                 }
-                if (entity.filePath != targetRelative) {
-                    imageDao.insert(entity.copy(filePath = targetRelative))
+                if (entity.filePath != targetRelative || cleanJson != entity.tagsJson) {
+                    imageDao.insert(entity.copy(filePath = targetRelative, tagsJson = cleanJson))
                 }
             }
             // images/ 根下残留的扁平文件迁入 pending

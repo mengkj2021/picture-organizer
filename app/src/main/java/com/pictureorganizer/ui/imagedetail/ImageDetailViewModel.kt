@@ -276,10 +276,10 @@ class ImageDetailViewModel(
         userTags: List<String>,
         clearEditor: Boolean,
     ) {
-        val fullTags = listOf(ImageListItem.statusTagFor(item.status)) + userTags
+        // S1：userTags 即用户标签清单，状态不写入 tagsJson
         viewModelScope.launch {
             busy.value = true
-            runCatching { repository.updateTags(item.id, fullTags) }
+            runCatching { repository.updateTags(item.id, userTags) }
                 .onSuccess { exifOk ->
                     if (clearEditor) {
                         editor.value =

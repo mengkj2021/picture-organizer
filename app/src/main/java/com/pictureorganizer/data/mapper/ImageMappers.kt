@@ -67,12 +67,3 @@ fun ImageListItem.toEntity(
 fun ImageStatus.toStorage(): String = name
 
 fun String.toImageStatus(): ImageStatus = runCatching { ImageStatus.valueOf(this) }.getOrDefault(ImageStatus.Pending)
-
-fun tagsForStatus(
-    status: ImageStatus,
-    extra: List<String> = emptyList(),
-): List<String> {
-    val statusTag = ImageListItem.statusTagFor(status)
-    val others = extra.filter { it != statusTag }
-    return listOf(statusTag) + others
-}

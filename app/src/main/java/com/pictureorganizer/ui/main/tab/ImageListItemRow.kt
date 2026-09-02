@@ -97,7 +97,7 @@ fun ImageListItemRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                item.tags.forEach { tag ->
+                ImageListItem.userTagsOf(item.tags).forEach { tag ->
                     AssistChip(
                         onClick = {},
                         label = { Text(tag, style = MaterialTheme.typography.labelSmall) },
@@ -182,7 +182,7 @@ private fun ImageListItemRowPreview() {
                     id = "preview-01",
                     date = "2026-08-27",
                     description = "周末出游照片，待重命名",
-                    tags = listOf("待处理", "旅行"),
+                    tags = listOf("旅行"),
                     placeholderColorArgb = 0xFFE57373,
                     status = ImageStatus.Pending,
                     filePath = "pending/preview-01.jpg",

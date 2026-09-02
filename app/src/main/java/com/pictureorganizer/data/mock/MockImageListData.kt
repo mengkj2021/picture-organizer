@@ -81,7 +81,8 @@ object MockImageListData {
             id = id,
             date = date,
             description = description,
-            tags = tags,
+            // S1：tags 仅用户标签；预览数据剔除状态词，模拟当前数据形态
+            tags = tags.filter { it !in ImageListItem.STATUS_TAGS },
             placeholderColorArgb = placeholderColors[colorIndex % placeholderColors.size],
             status = status,
             filePath = "${status.toDirName()}/$id.jpg",

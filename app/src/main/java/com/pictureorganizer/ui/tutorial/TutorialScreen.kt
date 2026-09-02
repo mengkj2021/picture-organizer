@@ -16,6 +16,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -52,97 +53,100 @@ fun TutorialScreen(
     val scope = rememberCoroutineScope()
     val lastIndex = tutorialPages.lastIndex
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .padding(16.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TextButton(onClick = onFinished) {
-                Text(stringResource(R.string.tutorial_skip))
-            }
-        }
-
-        HorizontalPager(
-            state = pagerState,
+    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+        Column(
             modifier =
                 Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-        ) { page ->
-            val item = tutorialPages[page]
-            Column(
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(onClick = onFinished) {
+                    Text(stringResource(R.string.tutorial_skip))
+                }
+            }
+
+            HorizontalPager(
+                state = pagerState,
                 modifier =
                     Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = stringResource(item.titleRes),
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(item.bodyRes),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            repeat(tutorialPages.size) { index ->
-                val selected = pagerState.currentPage == index
-                Surface(
+                        .weight(1f)
+                        .fillMaxWidth(),
+            ) { page ->
+                val item = tutorialPages[page]
+                Column(
                     modifier =
                         Modifier
-                            .padding(horizontal = 4.dp)
-                            .size(if (selected) 10.dp else 8.dp),
-                    shape = CircleShape,
-                    color =
-                        if (selected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outlineVariant
-                        },
-                ) {}
-            }
-        }
-
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (pagerState.currentPage < lastIndex) {
-                Button(
-                    onClick = {
-                        scope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        }
-                    },
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(stringResource(R.string.tutorial_next))
+                    Text(
+                        text = stringResource(item.titleRes),
+                        style = MaterialTheme.typography.headlineSmall,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(item.bodyRes),
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
-            } else {
-                Button(onClick = onFinished) {
-                    Text(stringResource(R.string.tutorial_start))
+            }
+
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                repeat(tutorialPages.size) { index ->
+                    val selected = pagerState.currentPage == index
+                    Surface(
+                        modifier =
+                            Modifier
+                                .padding(horizontal = 4.dp)
+                                .size(if (selected) 10.dp else 8.dp),
+                        shape = CircleShape,
+                        color =
+                            if (selected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.outlineVariant
+                            },
+                    ) {}
+                }
+            }
+
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (pagerState.currentPage < lastIndex) {
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
+                        },
+                    ) {
+                        Text(stringResource(R.string.tutorial_next))
+                    }
+                } else {
+                    Button(onClick = onFinished) {
+                        Text(stringResource(R.string.tutorial_start))
+                    }
                 }
             }
         }

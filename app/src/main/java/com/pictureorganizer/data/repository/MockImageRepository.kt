@@ -1,6 +1,5 @@
 package com.pictureorganizer.data.repository
 
-import com.pictureorganizer.data.mapper.tagsForStatus
 import com.pictureorganizer.data.mock.MockImageListData
 import com.pictureorganizer.model.ImageListItem
 import com.pictureorganizer.model.ImageStatus
@@ -52,7 +51,7 @@ object MockImageRepository : ImageRepository {
         fileName: String,
         importedAt: Long,
     ) {
-        items.update { it + item.copy(filePath = filePath) }
+        items.update { it + item.copy(tags = ImageListItem.userTagsOf(item.tags), filePath = filePath) }
     }
 
     override suspend fun rename(
@@ -86,7 +85,7 @@ object MockImageRepository : ImageRepository {
                 if (item.id != id) {
                     item
                 } else {
-                    item.copy(tags = tagsForStatus(item.status, tags))
+                    item.copy(tags = ImageListItem.userTagsOf(tags))
                 }
             }
         }

@@ -11,25 +11,17 @@ data class ImageListItem(
     /** 相对 `filesDir/images/` 的路径，如 `pending/xxx.jpg` */
     val filePath: String = "",
 ) {
-    fun withStatus(newStatus: ImageStatus): ImageListItem {
-        val statusTag = statusTagFor(newStatus)
-        val otherTags = tags.filter { it !in STATUS_TAGS }
-        return copy(
+    fun withStatus(newStatus: ImageStatus): ImageListItem =
+        copy(
             status = newStatus,
-            tags = listOf(statusTag) + otherTags,
+            // S1：状态由 status 字段表达，不再写入标签；顺带剔除历史残留的状态词
+            tags = userTagsOf(tags),
         )
-    }
 
     companion object {
-        // 仅包含当前三个状态的标签；新增状态时在此同步
+        // 三个状态名为保留字（S1「状态不算标签」）：
+        // 仅由 status 字段分类，不作为用户标签出现；禁止用户打为标签，并对历史数据兜底过滤
         val STATUS_TAGS = setOf("待处理", "已确认", "不修改")
-
-        fun statusTagFor(status: ImageStatus): String =
-            when (status) {
-                ImageStatus.Pending -> "待处理"
-                ImageStatus.Confirmed -> "已确认"
-                ImageStatus.NoModify -> "不修改"
-            }
 
         fun userTagsOf(tags: List<String>): List<String> = tags.filter { it !in STATUS_TAGS }
     }
