@@ -46,7 +46,7 @@
 
 | 日期 | 内容 | 关联提交 |
 |---|---|---|
-| 2026-09-03 | ktlintFormat 清 6 文件；`.githooks/pre-push`；git-convention 三处 + README；本机启用 hooksPath；违规拒推 / 干净通过实测 | （待用户 commit） |
+| 2026-09-03 | ktlintFormat 清 6 文件；`.githooks/pre-push`；git-convention 三处 + README；本机启用 hooksPath；违规拒推 / 干净通过实测 | 92a184d |
 
 ## 完结复盘（✅ / ❌ 后填；票与台账行保留，不删除）
 
