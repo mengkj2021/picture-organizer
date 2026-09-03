@@ -3,7 +3,7 @@ description: AI 全量开发约定，起票制、文档先行，以式样书与�
 globs: **/*
 alwaysApply: true
 enabled: true
-updatedAt: 2026-09-02
+updatedAt: 2026-09-03
 provider: both
 ---
 
@@ -24,19 +24,20 @@ provider: both
 4. **日志**：写开发日志（文件名带票号），回写票状态与分区台账；完成项进 `docs/工程/票/改动清单.md` 总台账
 5. **Review**：用户验收 → 票状态 ✅ / ❌，再提交
 
-## 权威文档
+## 权威文档（按需展开）
+
+全量分类索引见 `docs/README.md`。接票高频入口：
 
 | 文档 | 用途 |
-|------|------|
-| `docs/README.md` | docs 分类索引 |
+|---|---|
 | `docs/式样/项目式样说明书.md` | 功能、技术栈、版本矩阵 |
-| `docs/设计/架构设计.md` | MVVM、包结构、Room、数据流 |
+| `docs/设计/架构设计.md` | MVVM、**包结构 §2**、Room、数据流 |
 | `docs/设计/路由设计.md` | route 命名与导航图 |
-| `docs/画面/` | 各画面规格（每画面一目录 + 区域文件；见 `docs/画面/README.md`） |
-| `docs/工程/票/` | **票库**：起票制规则、四类票模板与分区台账（入口 `docs/工程/票/README.md`） |
-| `docs/工程/票/改动清单.md` | 总台账：已完成归档 + 待办一览 + 建议顺序（与分区台账配套） |
-| `docs/日志/` | 按日开发日志（文件名带票号 / 功能号） |
-| `shared/prompts/` | 拉入对话执行的提示词模板（功能开发、式样问答、文档整理） |
+| `docs/画面/` | 各画面规格（见 `docs/画面/README.md`） |
+| `docs/工程/票/` | 票库入口与四类分区台账 |
+| `docs/工程/票/改动清单.md` | 总台账（归档 + 待办 + 建议顺序） |
+| `docs/日志/` | 按日开发日志（文件名带票号） |
+| `shared/prompts/` | 拉入对话执行的提示词模板 |
 
 ## 强制约定
 
@@ -46,16 +47,7 @@ provider: both
 4. **route 命名**：全小写、多词连字符，见路由设计第 2 节
 5. **依赖变更**：同步更新 `android/gradle/libs.versions.toml` 与式样书 3.1 版本矩阵
 6. **票号贯穿**：开发日志文件名与 commit 信息带票号（如 `Bug2 …`、`S2 …`、`F1 …`）
-7. **包结构**（`android/app/src/main/java/com/pictureorganizer/`）：
-   - 画面 Composable 放 `ui/<screen>/`（纯 UI，无业务逻辑）
-   - 画面逻辑放 `ui/<screen>/<Screen>ViewModel.kt` + `*UiState` / `*UiEvent`
-   - 领域 / UI 模型放 `model/`（无 Android 框架依赖为佳）
-   - 数据访问放 `data/repository/`
-   - Room 持久化放 `data/local/`（Entity、DAO、Database、Converter）
-   - Entity ↔ UI 映射放 `data/mapper/`
-   - 假数据种子放 `data/mock/`（开发期保留，Preview / 测试）
-   - 文件 / 图片等无 UI 工具类放 `util/`
-   - route 常量集中定义于 `navigation/Routes.kt`
+7. **包结构**：以 `docs/设计/架构设计.md` **§2** 为准（目录树 + 放置约定）；改布局先改该节再改代码。不在本规则常驻展开。
 
 ## 维护入口
 

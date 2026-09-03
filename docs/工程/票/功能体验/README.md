@@ -27,7 +27,7 @@
 | F21 | 技能 create-screen-doc（新建画面文档 SOP） | ☐ | [F21-画面文档技能](F21-画面文档技能/) |
 | F22 | 技能 implement-screen（画面实现 SOP） | ☐ | [F22-画面实现技能](F22-画面实现技能/) |
 | F23 | 本地 Git Hook：push 前自动 ktlintCheck | ☐ | [F23-本地质量门禁](F23-本地质量门禁/) |
-| F24 | dev-convention 瘦身（常驻 vs 按需，防上下文膨胀） | ☐ | [F24-规则瘦身](F24-规则瘦身/) |
+| F24 | dev-convention 瘦身（常驻 vs 按需，防上下文膨胀） | ✅ | [F24-规则瘦身](F24-规则瘦身/) |
 | F25 | 统一版本矩阵（文档号 ↔ versionName ↔ versionCode） | ☐ | [F25-版本矩阵](F25-版本矩阵/) |
 | F26 | 设置新增 OssLicenses 画面（第三方开源许可一览） | ☐ | [F26-开源许可画面](F26-开源许可画面/) |
 | F27 | 设置画面底部显示版本号（versionName） | ☐ | [F27-设置底部版本号](F27-设置底部版本号/) |
