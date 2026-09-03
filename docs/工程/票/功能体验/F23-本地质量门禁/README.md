@@ -8,7 +8,7 @@
 | 类型 | 功能 / 体验票 |
 | 类型细分 | 工程质量（质量门禁） |
 | 标题 | 本地 Git Hook：push 前自动跑 `ktlintCheck`，不过则拒推 |
-| 状态 | ☐ 待实施 |
+| 状态 | ✅ 已完成 |
 | 起票日期 | 2026-09-03 |
 | 关联 | `shared/rules/git-convention.md`；android 工程（AGP/Gradle）；F16（后续可并入 test 任务） |
 
@@ -27,25 +27,29 @@
 
 ## 方案（接票后填）
 
-- 文档先行（画面文档 / 式样书 / 架构 / 路由，按需）：无（git-convention 文档需补一段）
-- 代码改动点：新增 hook 脚本（位置按落地形态拍板）；`shared/rules/git-convention.md` 补「push 前自动门禁」说明并三处同步
-- 验证方式：故意制造一处 ktlint 违规 → push 被拒；修复后 push 通过（可临时验证后还原）
+- 文档先行：无画面/式样变更；补 `shared/rules/git-convention.md`「push 前自动门禁」并三处同步；根 `README.md` 一句启用说明
+- 代码改动点：
+  1. **前置**：`ktlintFormat` 清 main 既有违规（6 文件），否则门禁一装上即处处拒推
+  2. 入仓 `.githooks/pre-push`（Windows 走 `cmd` + `gradlew.bat`；Unix 走 `./gradlew`）
+  3. 本机 `git config core.hooksPath .githooks`（不入仓，文档写明）
+- 验证方式：故意制造违规 → hook exit 1；还原后 hook exit 0
+- 先测后写（F20）：无纯业务逻辑可抽，豁免单测
 
 ## 验收标准
 
-- [ ] push 前自动跑 ktlintCheck；违规时 push 被拒并给出可读提示
-- [ ] 正常代码 push 不受影响（门禁通过）
-- [ ] 启用方式已写入 git-convention（三处同步）；克隆后一条命令可启用
-- [ ] 开发日志（文件名带本票号）已写
+- [x] push 前自动跑 ktlintCheck；违规时 push 被拒并给出可读提示
+- [x] 正常代码 push 不受影响（门禁通过）
+- [x] 启用方式已写入 git-convention（三处同步）；克隆后一条命令可启用
+- [x] 开发日志（文件名带本票号）已写
 
 ## 开发记录
 
 | 日期 | 内容 | 关联提交 |
 |---|---|---|
-|  |  |  |
+| 2026-09-03 | ktlintFormat 清 6 文件；`.githooks/pre-push`；git-convention 三处 + README；本机启用 hooksPath；违规拒推 / 干净通过实测 | （待用户 commit） |
 
 ## 完结复盘（✅ / ❌ 后填；票与台账行保留，不删除）
 
-- **落地效果**（达成了什么 / 与预期差距）：
-- **代价与遗留**（新增复杂度、未覆盖场景 → 转新票或备注）：
-- **错题本登记**：已登记 [docs/工程/错题本.md](../../../错题本.md) ／ 不适用
+- **落地效果**：本地 push 前强制 `ktlintCheck`；main 风格债清零，门禁可真正挡住违规。
+- **代价与遗留**：每克隆者须执行一次 `git config core.hooksPath .githooks`；云端 CI / 单测并入 hook 另票；Git Bash 下带空格 `JAVA_HOME` 需走 `gradlew.bat`（已处理）。
+- **错题本登记**：已登记 [docs/工程/错题本.md](../../../错题本.md)（Git Bash + 空格路径 JDK）

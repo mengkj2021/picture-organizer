@@ -101,8 +101,7 @@ class ImportViewModel(
             importSingle(target.uri, compressEnabled)
                 .onSuccess {
                     removeFailure(uri)
-                }
-                .onFailure { e ->
+                }.onFailure { e ->
                     updateFailure(uri, e)
                 }
             _uiState.update {
@@ -154,7 +153,10 @@ class ImportViewModel(
         }
     }
 
-    private fun updateFailure(uri: Uri, e: Throwable) {
+    private fun updateFailure(
+        uri: Uri,
+        e: Throwable,
+    ) {
         _uiState.update { state ->
             state.copy(
                 failedItems =
@@ -207,8 +209,7 @@ class ImportViewModel(
             else -> ImportErrorKind.Unknown
         }
 
-    private fun errorDetailOf(e: Throwable): String? =
-        e.message?.takeIf { it.isNotBlank() } ?: e::class.java.simpleName
+    private fun errorDetailOf(e: Throwable): String? = e.message?.takeIf { it.isNotBlank() } ?: e::class.java.simpleName
 
     class Factory(
         private val repository: ImageRepository,

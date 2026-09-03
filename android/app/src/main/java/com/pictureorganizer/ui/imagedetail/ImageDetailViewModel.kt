@@ -151,7 +151,12 @@ class ImageDetailViewModel(
 
     private fun restoreRenameStemIfBlank() {
         if (!editor.value.renameTouched) return
-        if (editor.value.renameStemDraft.trim().isNotEmpty()) return
+        if (editor.value.renameStemDraft
+                .trim()
+                .isNotEmpty()
+        ) {
+            return
+        }
         editor.update { it.copy(renameTouched = false, renameStemDraft = "") }
     }
 

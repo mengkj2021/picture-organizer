@@ -11,7 +11,9 @@ data class FailedImportItem(
 )
 
 /** 失败原因分类（本地化文案由 UI 层经 messageResId 映射） */
-enum class ImportErrorKind(val messageResId: Int) {
+enum class ImportErrorKind(
+    val messageResId: Int,
+) {
     ReadFailed(com.pictureorganizer.R.string.import_error_read),
     DecodeFailed(com.pictureorganizer.R.string.import_error_decode),
     Unknown(com.pictureorganizer.R.string.import_error_unknown),

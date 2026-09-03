@@ -121,6 +121,7 @@ gradlew.bat assembleDebug
 - **构建配置与文档**：由 AI 维护
 - **用户**：起票、确认待定项、Review 与验收
 - **AI 提交纪律**：已规则化，见 [shared/rules/git-convention.md](shared/rules/git-convention.md)（中文提交 `-F` 文件、禁 `git add .`、禁 `--force`、push 前自检）
+- **本地质量门禁（F23）**：克隆后执行一次 `git config core.hooksPath .githooks`；此后 `git push` 前自动跑 `ktlintCheck`，不过则拒推（详见 git-convention「push 前自动门禁」）
 
 ### 勿提交内容（已在 .gitignore）
 

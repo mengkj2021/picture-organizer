@@ -54,6 +54,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,6 +76,9 @@ import com.pictureorganizer.PictureOrganizerApplication
 import com.pictureorganizer.R
 import com.pictureorganizer.model.ImageListItem
 import java.io.File
+
+/** Bug5：捏合结束后抬指易被识别为单击，短时窗内忽略 tap（毫秒） */
+private const val TAP_SUPPRESS_AFTER_TRANSFORM_MS = 350L
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -168,7 +172,14 @@ fun ImageDetailScreen(
                             contentKey = current.id,
                             onScaledChanged = { scaled ->
                                 imageScaled = scaled
-                                if (!scaled) forceShowEditor = false
+                                // Bug5：进入放大或回到 1x 都清强制显示，避免「放大了仍显」
+                                forceShowEditor = false
+                            },
+                            onTransform = {
+                                // 捏合/平移进行中取消强制显示（单击唤出后继续缩放应再藏）
+                                if (forceShowEditor) {
+                                    forceShowEditor = false
+                                }
                             },
                             onSingleTap = {
                                 if (imageScaled) {
@@ -193,234 +204,234 @@ fun ImageDetailScreen(
                     }
 
                     if (showEditor) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .verticalScroll(rememberScrollState())
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.detail_rename),
-                            style = MaterialTheme.typography.titleSmall,
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .verticalScroll(rememberScrollState())
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            OutlinedTextField(
-                                value = state.renameStemDraft,
-                                onValueChange = {
-                                    viewModel.onEvent(ImageDetailUiEvent.RenameDraftChanged(it))
-                                },
-                                modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .onFocusChanged { focus ->
-                                            if (!focus.isFocused) {
-                                                viewModel.onEvent(ImageDetailUiEvent.RenameFocusLost)
-                                            }
-                                        },
-                                singleLine = true,
-                                enabled = !state.isBusy,
-                                suffix = {
-                                    if (state.renameExtension.isNotEmpty()) {
-                                        Text(
-                                            text = ".${state.renameExtension}",
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    }
-                                },
-                            )
-                            Button(
-                                onClick = { viewModel.onEvent(ImageDetailUiEvent.SaveRename) },
-                                enabled = !state.isBusy,
-                            ) {
-                                Text(stringResource(R.string.detail_rename_save))
-                            }
-                        }
-                        var renameTemplateMenuExpanded by remember { mutableStateOf(false) }
-                        Box {
-                            TextButton(
-                                onClick = { renameTemplateMenuExpanded = true },
-                                enabled = !state.isBusy && state.renameTemplates.isNotEmpty(),
-                            ) {
-                                Text(stringResource(R.string.detail_apply_rename_template))
-                            }
-                            DropdownMenu(
-                                expanded = renameTemplateMenuExpanded,
-                                onDismissRequest = { renameTemplateMenuExpanded = false },
-                            ) {
-                                state.renameTemplates.forEach { template ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                if (template.isDefault) {
-                                                    stringResource(
-                                                        R.string.detail_template_default_fmt,
-                                                        template.name,
-                                                    )
-                                                } else {
-                                                    template.name
-                                                },
-                                            )
-                                        },
-                                        onClick = {
-                                            renameTemplateMenuExpanded = false
-                                            viewModel.onEvent(
-                                                ImageDetailUiEvent.ApplyRenameTemplate(template.id),
-                                            )
-                                        },
-                                    )
-                                }
-                            }
-                        }
-
-                        Text(
-                            text = stringResource(R.string.detail_tags),
-                            style = MaterialTheme.typography.titleSmall,
-                        )
-                        val userTags =
-                            current
-                                ?.let { ImageListItem.userTagsOf(it.tags) }
-                                .orEmpty()
-                        val libraryNames = state.libraryTags.map { it.name }.toSet()
-                        if (state.libraryTags.isNotEmpty()) {
                             Text(
-                                text = stringResource(R.string.detail_tag_library),
-                                style = MaterialTheme.typography.labelMedium,
+                                text = stringResource(R.string.detail_rename),
+                                style = MaterialTheme.typography.titleSmall,
                             )
-                            FlowRow(
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
-                                state.libraryTags.forEach { tag ->
-                                    FilterChip(
-                                        selected = tag.name in userTags,
-                                        onClick = {
-                                            viewModel.onEvent(
-                                                ImageDetailUiEvent.ToggleLibraryTag(tag.name),
-                                            )
-                                        },
-                                        enabled = !state.isBusy,
-                                        label = { Text(tag.name) },
-                                    )
-                                }
-                            }
-                        }
-                        val customTags =
-                            userTags
-                                .withIndex()
-                                .filter { (_, name) -> name !in libraryNames }
-                        if (customTags.isNotEmpty()) {
-                            Text(
-                                text = stringResource(R.string.detail_tag_custom),
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                customTags.forEach { (index, tag) ->
-                                    InputChip(
-                                        selected = state.editingUserTagIndex == index,
-                                        onClick = {
-                                            viewModel.onEvent(ImageDetailUiEvent.StartEditTag(index))
-                                        },
-                                        label = { Text(tag) },
-                                        trailingIcon = {
-                                            Icon(
-                                                imageVector = Icons.Default.Close,
-                                                contentDescription = stringResource(R.string.detail_tag_delete),
-                                                modifier =
-                                                    Modifier
-                                                        .size(18.dp)
-                                                        .clickable {
-                                                            viewModel.onEvent(
-                                                                ImageDetailUiEvent.DeleteTag(index),
-                                                            )
-                                                        },
-                                            )
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                        var templateMenuExpanded by remember { mutableStateOf(false) }
-                        Box {
-                            OutlinedButton(
-                                onClick = { templateMenuExpanded = true },
-                                enabled = !state.isBusy && state.templates.isNotEmpty(),
-                            ) {
-                                Text(stringResource(R.string.detail_apply_template))
-                            }
-                            DropdownMenu(
-                                expanded = templateMenuExpanded,
-                                onDismissRequest = { templateMenuExpanded = false },
-                            ) {
-                                state.templates.forEach { template ->
-                                    DropdownMenuItem(
-                                        text = {
+                                OutlinedTextField(
+                                    value = state.renameStemDraft,
+                                    onValueChange = {
+                                        viewModel.onEvent(ImageDetailUiEvent.RenameDraftChanged(it))
+                                    },
+                                    modifier =
+                                        Modifier
+                                            .weight(1f)
+                                            .onFocusChanged { focus ->
+                                                if (!focus.isFocused) {
+                                                    viewModel.onEvent(ImageDetailUiEvent.RenameFocusLost)
+                                                }
+                                            },
+                                    singleLine = true,
+                                    enabled = !state.isBusy,
+                                    suffix = {
+                                        if (state.renameExtension.isNotEmpty()) {
                                             Text(
-                                                if (template.isDefault) {
-                                                    stringResource(
-                                                        R.string.detail_template_default_fmt,
-                                                        template.name,
-                                                    )
-                                                } else {
-                                                    template.name
-                                                },
+                                                text = ".${state.renameExtension}",
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
-                                        },
-                                        onClick = {
-                                            templateMenuExpanded = false
-                                            viewModel.onEvent(
-                                                ImageDetailUiEvent.ApplyTemplate(template.id),
-                                            )
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            OutlinedTextField(
-                                value = state.tagDraft,
-                                onValueChange = {
-                                    viewModel.onEvent(ImageDetailUiEvent.TagDraftChanged(it))
-                                },
-                                modifier = Modifier.weight(1f),
-                                singleLine = true,
-                                enabled = !state.isBusy,
-                                label = {
-                                    Text(
-                                        if (state.editingUserTagIndex != null) {
-                                            stringResource(R.string.detail_tag_edit)
-                                        } else {
-                                            stringResource(R.string.detail_tag_add)
-                                        },
-                                    )
-                                },
-                            )
-                            Button(
-                                onClick = { viewModel.onEvent(ImageDetailUiEvent.SaveTag) },
-                                enabled = !state.isBusy,
-                            ) {
-                                Text(stringResource(R.string.detail_tag_save))
-                            }
-                            if (state.editingUserTagIndex != null) {
-                                OutlinedButton(
-                                    onClick = { viewModel.onEvent(ImageDetailUiEvent.CancelEditTag) },
+                                        }
+                                    },
+                                )
+                                Button(
+                                    onClick = { viewModel.onEvent(ImageDetailUiEvent.SaveRename) },
                                     enabled = !state.isBusy,
                                 ) {
-                                    Text(stringResource(R.string.detail_tag_cancel))
+                                    Text(stringResource(R.string.detail_rename_save))
+                                }
+                            }
+                            var renameTemplateMenuExpanded by remember { mutableStateOf(false) }
+                            Box {
+                                TextButton(
+                                    onClick = { renameTemplateMenuExpanded = true },
+                                    enabled = !state.isBusy && state.renameTemplates.isNotEmpty(),
+                                ) {
+                                    Text(stringResource(R.string.detail_apply_rename_template))
+                                }
+                                DropdownMenu(
+                                    expanded = renameTemplateMenuExpanded,
+                                    onDismissRequest = { renameTemplateMenuExpanded = false },
+                                ) {
+                                    state.renameTemplates.forEach { template ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    if (template.isDefault) {
+                                                        stringResource(
+                                                            R.string.detail_template_default_fmt,
+                                                            template.name,
+                                                        )
+                                                    } else {
+                                                        template.name
+                                                    },
+                                                )
+                                            },
+                                            onClick = {
+                                                renameTemplateMenuExpanded = false
+                                                viewModel.onEvent(
+                                                    ImageDetailUiEvent.ApplyRenameTemplate(template.id),
+                                                )
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+
+                            Text(
+                                text = stringResource(R.string.detail_tags),
+                                style = MaterialTheme.typography.titleSmall,
+                            )
+                            val userTags =
+                                current
+                                    ?.let { ImageListItem.userTagsOf(it.tags) }
+                                    .orEmpty()
+                            val libraryNames = state.libraryTags.map { it.name }.toSet()
+                            if (state.libraryTags.isNotEmpty()) {
+                                Text(
+                                    text = stringResource(R.string.detail_tag_library),
+                                    style = MaterialTheme.typography.labelMedium,
+                                )
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    state.libraryTags.forEach { tag ->
+                                        FilterChip(
+                                            selected = tag.name in userTags,
+                                            onClick = {
+                                                viewModel.onEvent(
+                                                    ImageDetailUiEvent.ToggleLibraryTag(tag.name),
+                                                )
+                                            },
+                                            enabled = !state.isBusy,
+                                            label = { Text(tag.name) },
+                                        )
+                                    }
+                                }
+                            }
+                            val customTags =
+                                userTags
+                                    .withIndex()
+                                    .filter { (_, name) -> name !in libraryNames }
+                            if (customTags.isNotEmpty()) {
+                                Text(
+                                    text = stringResource(R.string.detail_tag_custom),
+                                    style = MaterialTheme.typography.labelMedium,
+                                )
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    customTags.forEach { (index, tag) ->
+                                        InputChip(
+                                            selected = state.editingUserTagIndex == index,
+                                            onClick = {
+                                                viewModel.onEvent(ImageDetailUiEvent.StartEditTag(index))
+                                            },
+                                            label = { Text(tag) },
+                                            trailingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = stringResource(R.string.detail_tag_delete),
+                                                    modifier =
+                                                        Modifier
+                                                            .size(18.dp)
+                                                            .clickable {
+                                                                viewModel.onEvent(
+                                                                    ImageDetailUiEvent.DeleteTag(index),
+                                                                )
+                                                            },
+                                                )
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+                            var templateMenuExpanded by remember { mutableStateOf(false) }
+                            Box {
+                                OutlinedButton(
+                                    onClick = { templateMenuExpanded = true },
+                                    enabled = !state.isBusy && state.templates.isNotEmpty(),
+                                ) {
+                                    Text(stringResource(R.string.detail_apply_template))
+                                }
+                                DropdownMenu(
+                                    expanded = templateMenuExpanded,
+                                    onDismissRequest = { templateMenuExpanded = false },
+                                ) {
+                                    state.templates.forEach { template ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    if (template.isDefault) {
+                                                        stringResource(
+                                                            R.string.detail_template_default_fmt,
+                                                            template.name,
+                                                        )
+                                                    } else {
+                                                        template.name
+                                                    },
+                                                )
+                                            },
+                                            onClick = {
+                                                templateMenuExpanded = false
+                                                viewModel.onEvent(
+                                                    ImageDetailUiEvent.ApplyTemplate(template.id),
+                                                )
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                OutlinedTextField(
+                                    value = state.tagDraft,
+                                    onValueChange = {
+                                        viewModel.onEvent(ImageDetailUiEvent.TagDraftChanged(it))
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    singleLine = true,
+                                    enabled = !state.isBusy,
+                                    label = {
+                                        Text(
+                                            if (state.editingUserTagIndex != null) {
+                                                stringResource(R.string.detail_tag_edit)
+                                            } else {
+                                                stringResource(R.string.detail_tag_add)
+                                            },
+                                        )
+                                    },
+                                )
+                                Button(
+                                    onClick = { viewModel.onEvent(ImageDetailUiEvent.SaveTag) },
+                                    enabled = !state.isBusy,
+                                ) {
+                                    Text(stringResource(R.string.detail_tag_save))
+                                }
+                                if (state.editingUserTagIndex != null) {
+                                    OutlinedButton(
+                                        onClick = { viewModel.onEvent(ImageDetailUiEvent.CancelEditTag) },
+                                        enabled = !state.isBusy,
+                                    ) {
+                                        Text(stringResource(R.string.detail_tag_cancel))
+                                    }
                                 }
                             }
                         }
-                    }
                     }
 
                     SiblingThumbStrip(
@@ -446,15 +457,21 @@ private fun ZoomableImage(
     placeholderColor: Color,
     contentKey: String,
     onScaledChanged: (Boolean) -> Unit,
+    onTransform: () -> Unit,
     onSingleTap: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var scale by remember(contentKey) { mutableFloatStateOf(1f) }
     var offset by remember(contentKey) { mutableStateOf(Offset.Zero) }
+    // Bug5：用可变引用，避免双 pointerInput 闭包读到过期 State
+    val lastTransformUptimeMs = remember(contentKey) { longArrayOf(0L) }
+    val currentOnTransform by rememberUpdatedState(onTransform)
+    val currentOnSingleTap by rememberUpdatedState(onSingleTap)
+    val currentOnScaledChanged by rememberUpdatedState(onScaledChanged)
     val context = LocalContext.current
 
     LaunchedEffect(scale > 1f) {
-        onScaledChanged(scale > 1f)
+        currentOnScaledChanged(scale > 1f)
     }
 
     Box(
@@ -463,13 +480,23 @@ private fun ZoomableImage(
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .pointerInput(contentKey) {
                     detectTransformGestures { _, pan, zoom, _ ->
+                        val transformed = zoom != 1f || pan != Offset.Zero
+                        if (transformed) {
+                            lastTransformUptimeMs[0] = System.currentTimeMillis()
+                            currentOnTransform()
+                        }
                         scale = (scale * zoom).coerceIn(1f, 5f)
                         offset = if (scale > 1f) offset + pan else Offset.Zero
                     }
-                }
-                .pointerInput(contentKey) {
+                }.pointerInput(contentKey) {
                     detectTapGestures(
-                        onTap = { onSingleTap() },
+                        onTap = {
+                            val sinceTransform = System.currentTimeMillis() - lastTransformUptimeMs[0]
+                            if (sinceTransform < TAP_SUPPRESS_AFTER_TRANSFORM_MS) {
+                                return@detectTapGestures
+                            }
+                            currentOnSingleTap()
+                        },
                         onDoubleTap = {
                             scale = 1f
                             offset = Offset.Zero

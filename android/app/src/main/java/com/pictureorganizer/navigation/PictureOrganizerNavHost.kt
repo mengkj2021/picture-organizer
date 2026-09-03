@@ -111,7 +111,9 @@ fun PictureOrganizerNavHost() {
                             selectedTagNames = TagFilterCriteria.parseTagsParam(tagsRaw),
                             includeUntagged = untagged,
                             nameContains = q,
-                            sort = com.pictureorganizer.model.ImageListSort.fromParam(sortRaw),
+                            sort =
+                                com.pictureorganizer.model.ImageListSort
+                                    .fromParam(sortRaw),
                         ),
                     ),
                 )
@@ -158,7 +160,9 @@ fun PictureOrganizerNavHost() {
                             selectedTagNames = TagFilterCriteria.parseTagsParam(tagsRaw),
                             includeUntagged = untagged,
                             nameContains = q,
-                            sort = com.pictureorganizer.model.ImageListSort.fromParam(sortRaw),
+                            sort =
+                                com.pictureorganizer.model.ImageListSort
+                                    .fromParam(sortRaw),
                         ),
                     ),
                 )
