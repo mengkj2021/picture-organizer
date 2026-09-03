@@ -8,7 +8,7 @@
 | 类型 | 功能 / 体验票 |
 | 类型细分 | 工程质量（学习 AI 开发实践） |
 | 标题 | 引入单元测试：基础设施与首批易碎纯逻辑覆盖 |
-| 状态 | ☐ 待实施 |
+| 状态 | ✅ 已完成 |
 | 起票日期 | 2026-09-03 |
 | 关联 | `android/app/build.gradle.kts`；`shared/rules/dev-convention.md`；错题本 |
 
@@ -35,26 +35,41 @@
 
 ## 方案（接票后填）
 
-- 文档先行（画面文档 / 式样书 / 架构 / 路由，按需）：不涉画面与式样，无
-- 代码改动点：`android/gradle/libs.versions.toml`（新增测试依赖版本）、`android/app/build.gradle.kts`（`testImplementation`）、新建 `android/app/src/test/` 下首批测试
-- 验证方式：`cd android && ./gradlew testDebugUnitTest` 全绿；`./gradlew ktlintCheck` 仍通过（新测试须过 ktlint 风格）
+- 文档先行：无画面；式样书 §3.1 补测试依赖版本
+- 代码：`libs.versions.toml` + `app/build.gradle.kts` + 三份 `*Test.kt`
+- 验证：`testDebugUnitTest` 全绿；`ktlintTestSourceSetCheck` 通过
 
 ## 验收标准
 
-- [ ] `cd android && ./gradlew testDebugUnitTest` 全部通过
-- [ ] `./gradlew ktlintCheck` 仍通过（含新增测试文件）
-- [ ] 首批测试覆盖三处：`RenamePatternApplier`、`ImageListItem`（userTagsOf / withStatus）、`ImageTagFilter`（matchesFilter / sortedByFilter），每处含边界用例（空 pattern / 空标签 / 无扩展名等）
-- [ ] 票内「开发记录」写明：测试怎么跑、新测试文件放哪、怎么加
-- [ ] 开发日志（文件名带本票号）已写
+- [x] `cd android && ./gradlew testDebugUnitTest` 全部通过（16 用例）
+- [x] 新增测试文件通过 `ktlintTestSourceSetCheck`（**注**：全量 `ktlintCheck` 仍因既有 main 违规失败，见复盘）
+- [x] 首批测试覆盖三处：`RenamePatternApplier`、`ImageListItem`、`ImageTagFilter`，含边界用例
+- [x] 票内「开发记录」写明：测试怎么跑、新测试文件放哪、怎么加
+- [x] 开发日志（文件名带本票号）已写
 
 ## 开发记录
 
 | 日期 | 内容 | 关联提交 |
 |---|---|---|
-|  |  |  |
+| 2026-09-03 | 基础设施 + 首批 16 测；式样 §3.1 | （本批） |
+
+### 测试怎么跑
+
+```bat
+cd android
+set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
+gradlew.bat testDebugUnitTest
+```
+
+### 新测试怎么加
+
+1. 路径：`android/app/src/test/java/com/pictureorganizer/<同被测包>/XxxTest.kt`
+2. 框架：JUnit4（`org.junit.Test` / `Assert`）
+3. 仅测纯 JVM 友好逻辑；需 Android / Room / Compose 的另起票评估
+4. 提交前至少跑通 `testDebugUnitTest` 与 `ktlintTestSourceSetCheck`
 
 ## 完结复盘（✅ / ❌ 后填；票与台账行保留，不删除）
 
-- **落地效果**（达成了什么 / 与预期差距）：
-- **代价与遗留**（新增复杂度、未覆盖场景 → 转新票或备注）：
-- **错题本登记**：已登记 [docs/工程/错题本.md](../../../错题本.md) ／ 不适用
+- **落地效果**：从零到可跑单测；三处易碎纯逻辑有回归护栏；`kotlinx-coroutines-test` 已就位供 F20 使用。
+- **代价与遗留**：全量 `ktlintCheck` 因 **main 既有** 缩进/换行违规失败（ImageDetailScreen、Import* 等），本票未扩 scope 修；建议另开票或并入 F23 前清理。Converters/Mapper 仍无 JVM 测。
+- **错题本登记**：不适用

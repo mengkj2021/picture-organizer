@@ -81,5 +81,7 @@ dependencies {
     implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.datastore.preferences)
     ksp(libs.androidx.room.compiler)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     debugImplementation(libs.androidx.ui.tooling)
 }
