@@ -26,7 +26,7 @@ picture-organizer/
 | [docs/设计/路由设计.md](docs/设计/路由设计.md) | Navigation Compose 路由命名与导航图 |
 | [docs/画面/](docs/画面/) | 各画面规格（每画面一目录，见 [画面/README.md](docs/画面/README.md)） |
 | [docs/工程/票/](docs/工程/票/) | **票库**：Bug / 式样变更 / 调查 / 功能体验四类票（起票模板与台账） |
-| [docs/工程/改动清单.md](docs/工程/改动清单.md) | 开发台账（已完成注记 + 指向票库） |
+| [docs/工程/票/改动清单.md](docs/工程/票/改动清单.md) | 总台账：已完成票 + 待办一览 + 建议实施顺序 |
 | [docs/工程/AI协作复盘-阶段一.md](docs/工程/AI协作复盘-阶段一.md) | AI 开发协作阶段复盘（成效 / 缺陷 / 起票衔接） |
 | [docs/日志/](docs/日志/) | 按日开发日志 |
 | [shared/prompts/](shared/prompts/) | 拉入对话执行的提示词（功能开发 / 式样问答 / 文档整理） |
