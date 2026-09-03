@@ -7,7 +7,7 @@ import java.io.File
 
 /**
  * 用户标签与 JPEG Exif `UserComment` 的双向同步（JSON 数组）。
- * 不含状态标签（待处理 / 已确认 / 不修改）。
+ * 不含状态标签（待处理 / 已确认 / 回收站）。
  */
 object ImageTagMetadata {
     fun writeUserTags(

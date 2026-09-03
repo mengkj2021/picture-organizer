@@ -8,7 +8,7 @@ import org.junit.Test
 class ImageListItemTest {
     @Test
     fun userTagsOf_stripsStatusReservedWords() {
-        val input = listOf("待处理", "旅行", "已确认", "家人", "不修改")
+        val input = listOf("待处理", "旅行", "已确认", "家人", "回收站")
         assertEquals(listOf("旅行", "家人"), ImageListItem.userTagsOf(input))
     }
 
@@ -20,13 +20,18 @@ class ImageListItemTest {
     @Test
     fun userTagsOf_onlyStatusTags_yieldsEmpty() {
         assertTrue(
-            ImageListItem.userTagsOf(listOf("待处理", "已确认", "不修改")).isEmpty(),
+            ImageListItem.userTagsOf(listOf("待处理", "已确认", "回收站")).isEmpty(),
         )
     }
 
     @Test
     fun statusTags_containsThreeReservedNames() {
-        assertEquals(setOf("待处理", "已确认", "不修改"), ImageListItem.STATUS_TAGS)
+        assertEquals(setOf("待处理", "已确认", "回收站"), ImageListItem.STATUS_TAGS)
+    }
+
+    @Test
+    fun userTagsOf_oldNoModifyWord_isNotReserved() {
+        assertEquals(listOf("不修改"), ImageListItem.userTagsOf(listOf("不修改")))
     }
 
     @Test

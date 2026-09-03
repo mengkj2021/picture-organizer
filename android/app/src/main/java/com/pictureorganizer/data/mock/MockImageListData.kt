@@ -55,18 +55,18 @@ object MockImageListData {
 
     fun noModifyItems(): List<ImageListItem> =
         listOf(
-            item("nomodify-01", "2026-08-02", "原始备份，无需修改", listOf("不修改", "备份"), 0, ImageStatus.NoModify),
-            item("nomodify-02", "2026-08-04", "系统默认壁纸截图", listOf("不修改"), 1, ImageStatus.NoModify),
-            item("nomodify-03", "2026-08-05", "临时缓存图片，保持原样", listOf("不修改", "缓存"), 2, ImageStatus.NoModify),
-            item("nomodify-04", "2026-08-07", "已归档历史照片", listOf("不修改", "归档"), 3, ImageStatus.NoModify),
-            item("nomodify-05", "2026-08-08", "参考素材，不纳入整理", listOf("不修改", "素材"), 4, ImageStatus.NoModify),
-            item("nomodify-06", "2026-08-10", "第三方分享原图", listOf("不修改"), 5, ImageStatus.NoModify),
-            item("nomodify-07", "2026-08-12", "只读副本，禁止改动", listOf("不修改", "副本"), 6, ImageStatus.NoModify),
-            item("nomodify-08", "2026-08-14", "测试导入图片", listOf("不修改", "测试"), 7, ImageStatus.NoModify),
-            item("nomodify-09", "2026-08-16", "低优先级，暂不处理", listOf("不修改"), 8, ImageStatus.NoModify),
-            item("nomodify-10", "2026-08-18", "水印样例图", listOf("不修改", "样例"), 9, ImageStatus.NoModify),
-            item("nomodify-11", "2026-08-20", "已标记为跳过的图片", listOf("不修改", "跳过"), 10, ImageStatus.NoModify),
-            item("nomodify-12", "2026-08-23", "外部链接保存图", listOf("不修改"), 11, ImageStatus.NoModify),
+            item("nomodify-01", "2026-08-02", "原始备份，无需修改", listOf("备份"), 0, ImageStatus.NoModify),
+            item("nomodify-02", "2026-08-04", "系统默认壁纸截图", emptyList(), 1, ImageStatus.NoModify),
+            item("nomodify-03", "2026-08-05", "临时缓存图片，保持原样", listOf("缓存"), 2, ImageStatus.NoModify),
+            item("nomodify-04", "2026-08-07", "已归档历史照片", listOf("归档"), 3, ImageStatus.NoModify),
+            item("nomodify-05", "2026-08-08", "参考素材，不纳入整理", listOf("素材"), 4, ImageStatus.NoModify),
+            item("nomodify-06", "2026-08-10", "第三方分享原图", emptyList(), 5, ImageStatus.NoModify),
+            item("nomodify-07", "2026-08-12", "只读副本，禁止改动", listOf("副本"), 6, ImageStatus.NoModify),
+            item("nomodify-08", "2026-08-14", "测试导入图片", listOf("测试"), 7, ImageStatus.NoModify),
+            item("nomodify-09", "2026-08-16", "低优先级，暂不处理", emptyList(), 8, ImageStatus.NoModify),
+            item("nomodify-10", "2026-08-18", "水印样例图", listOf("样例"), 9, ImageStatus.NoModify),
+            item("nomodify-11", "2026-08-20", "已标记为跳过的图片", listOf("跳过"), 10, ImageStatus.NoModify),
+            item("nomodify-12", "2026-08-23", "外部链接保存图", emptyList(), 11, ImageStatus.NoModify),
         )
 
     private fun item(

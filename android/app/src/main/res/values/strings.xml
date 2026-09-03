@@ -3,10 +3,10 @@
     <string name="app_name">图片整理</string>
     <string name="tab_pending">待处理一览</string>
     <string name="tab_confirmed">已确认一览</string>
-    <string name="tab_no_modify">不修改一览</string>
+    <string name="tab_no_modify">回收站一览</string>
     <string name="empty_pending">暂无待处理图片</string>
     <string name="empty_confirmed">暂无已确认图片</string>
-    <string name="empty_no_modify">暂无不修改图片</string>
+    <string name="empty_no_modify">暂无回收站图片</string>
     <string name="action_edit">编辑</string>
     <string name="action_done">完成</string>
     <string name="action_select_all">全选</string>
@@ -30,7 +30,7 @@
     <string name="page_indicator">第 %1$d / %2$d 页</string>
     <string name="move_to_pending">待处理</string>
     <string name="move_to_confirmed">已确认</string>
-    <string name="move_to_no_modify">不修改</string>
+    <string name="move_to_no_modify">回收站</string>
     <string name="import_title">导入图片</string>
     <string name="import_duplicate_hint">提示：同一张图片重复导入会生成另一条记录（算作不同图片），不会去重覆盖。</string>
     <string name="import_from_gallery">从相册选择</string>
@@ -70,7 +70,7 @@
     <string name="detail_tag_cancel">取消</string>
     <string name="detail_tag_empty">标签不能为空</string>
     <string name="detail_tag_exists">标签已存在</string>
-    <string name="detail_tag_reserved">状态名不能用作标签（待处理 / 已确认 / 不修改）</string>
+    <string name="detail_tag_reserved">状态名不能用作标签（待处理 / 已确认 / 回收站）</string>
     <string name="detail_tags_ok">标签已保存</string>
     <string name="detail_exif_warn">标签已写入数据库，但文件 Exif 未写入</string>
     <string name="detail_tag_library">标签库</string>
@@ -128,7 +128,7 @@
     <string name="tutorial_page1_title">导入图片</string>
     <string name="tutorial_page1_body">从相册或文件将图片导入「待处理」。</string>
     <string name="tutorial_page2_title">整理分类</string>
-    <string name="tutorial_page2_body">移动到已确认或不修改，并为图片打标签。</string>
+    <string name="tutorial_page2_body">移动到已确认或回收站，并为图片打标签。</string>
     <string name="tutorial_page3_title">筛选与打包</string>
     <string name="tutorial_page3_body">按标签筛选列表；已确认图片可按标签打包导出。</string>
 </resources>

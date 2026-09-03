@@ -21,9 +21,9 @@ data class ImageListItem(
         )
 
     companion object {
-        // 三个状态名为保留字（S1「状态不算标签」）：
+        // 三个状态名为保留字（S1「状态不算标签」；S3 显示名「不修改」→「回收站」）：
         // 仅由 status 字段分类，不作为用户标签出现；禁止用户打为标签，并对历史数据兜底过滤
-        val STATUS_TAGS = setOf("待处理", "已确认", "不修改")
+        val STATUS_TAGS = setOf("待处理", "已确认", "回收站")
 
         fun userTagsOf(tags: List<String>): List<String> = tags.filter { it !in STATUS_TAGS }
     }
