@@ -52,7 +52,7 @@
 
 | 日期 | 内容 | 关联提交 |
 |---|---|---|
-| 2026-09-04 | BackHandler 修正；ImportCompleted + Snackbar；孤儿清理与单测；文档同步 | （待用户提交） |
+| 2026-09-04 | BackHandler 修正；ImportCompleted + Snackbar；孤儿清理与单测；文档同步 | b8c9900 |
 
 ## 完结复盘（✅ / ❌ 后填；票与台账行保留，不删除）
 
