@@ -40,6 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -48,6 +49,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -79,6 +81,9 @@ import java.io.File
 
 /** Bug5：捏合结束后抬指易被识别为单击，短时窗内忽略 tap（毫秒） */
 private const val TAP_SUPPRESS_AFTER_TRANSFORM_MS = 350L
+
+/** F9：库标签超过此数量时主区收起未选项，经面板选择 */
+private const val LIBRARY_TAG_COLLAPSE_THRESHOLD = 10
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -297,26 +302,85 @@ fun ImageDetailScreen(
                                     ?.let { ImageListItem.userTagsOf(it.tags) }
                                     .orEmpty()
                             val libraryNames = state.libraryTags.map { it.name }.toSet()
+                            var showLibraryPicker by remember { mutableStateOf(false) }
+                            val libraryPickerSheetState =
+                                rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                            val collapseLibrary =
+                                state.libraryTags.size > LIBRARY_TAG_COLLAPSE_THRESHOLD
                             if (state.libraryTags.isNotEmpty()) {
                                 Text(
                                     text = stringResource(R.string.detail_tag_library),
                                     style = MaterialTheme.typography.labelMedium,
                                 )
-                                FlowRow(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                val libraryChips =
+                                    if (collapseLibrary) {
+                                        state.libraryTags.filter { it.name in userTags }
+                                    } else {
+                                        state.libraryTags
+                                    }
+                                if (libraryChips.isNotEmpty()) {
+                                    FlowRow(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    ) {
+                                        libraryChips.forEach { tag ->
+                                            FilterChip(
+                                                selected = tag.name in userTags,
+                                                onClick = {
+                                                    viewModel.onEvent(
+                                                        ImageDetailUiEvent.ToggleLibraryTag(tag.name),
+                                                    )
+                                                },
+                                                enabled = !state.isBusy,
+                                                label = { Text(tag.name) },
+                                            )
+                                        }
+                                    }
+                                }
+                                if (collapseLibrary) {
+                                    OutlinedButton(
+                                        onClick = { showLibraryPicker = true },
+                                        enabled = !state.isBusy,
+                                    ) {
+                                        Text(stringResource(R.string.detail_tag_pick_library))
+                                    }
+                                }
+                            }
+                            if (showLibraryPicker) {
+                                ModalBottomSheet(
+                                    onDismissRequest = { showLibraryPicker = false },
+                                    sheetState = libraryPickerSheetState,
                                 ) {
-                                    state.libraryTags.forEach { tag ->
-                                        FilterChip(
-                                            selected = tag.name in userTags,
-                                            onClick = {
-                                                viewModel.onEvent(
-                                                    ImageDetailUiEvent.ToggleLibraryTag(tag.name),
-                                                )
-                                            },
-                                            enabled = !state.isBusy,
-                                            label = { Text(tag.name) },
+                                    Column(
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp)
+                                                .padding(bottom = 32.dp)
+                                                .verticalScroll(rememberScrollState()),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.detail_tag_pick_library_title),
+                                            style = MaterialTheme.typography.titleMedium,
                                         )
+                                        FlowRow(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                                        ) {
+                                            state.libraryTags.forEach { tag ->
+                                                FilterChip(
+                                                    selected = tag.name in userTags,
+                                                    onClick = {
+                                                        viewModel.onEvent(
+                                                            ImageDetailUiEvent.ToggleLibraryTag(tag.name),
+                                                        )
+                                                    },
+                                                    enabled = !state.isBusy,
+                                                    label = { Text(tag.name) },
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
