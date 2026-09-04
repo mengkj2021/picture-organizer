@@ -13,6 +13,7 @@
 │   └── gradle/                        # wrapper（+ 本地 zip 不提交）与 libs.versions.toml
 ├── shared/                            # ★ AI 配置唯一维护入口（改动都从这里开始）
 │   ├── README.md                      # 项目说明（CodeBuddy / Cursor 共用一份）
+│   ├── AI配置落位.md                  # ★ F30：rules/prompts/skills/docs 判定与盘点
 │   ├── prompts/                       # 拉入对话执行的提示词模板
 │   │   ├── README.md
 │   │   ├── 功能开发.md
@@ -35,6 +36,12 @@
     ├── dev-convention.mdc
     └── git-convention.mdc
 ```
+
+## AI 配置落位（F30）
+
+三类执行配置与产品文档的边界、盘点表见 **[AI配置落位.md](AI配置落位.md)**。  
+口诀：rules = 红绿灯；prompts = 这次怎么开车；skills = 某一类活的 SOP；docs = 按需打开的图纸。  
+文档变厚 / 大项目时如何加厚（不塞进常驻 rules）见 [`docs/工程/AI配置扩大方向.md`](../docs/工程/AI配置扩大方向.md)。
 
 ## 维护流程
 

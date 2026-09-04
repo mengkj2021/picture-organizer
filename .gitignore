@@ -25,3 +25,6 @@ android/gradle/gradle-daemon-jvm.properties
 !.codebuddy/
 !.codebuddy/rules
 !.codebuddy/rules/**
+
+# 本地临时阅读/分析（不入库）
+.tmp/
