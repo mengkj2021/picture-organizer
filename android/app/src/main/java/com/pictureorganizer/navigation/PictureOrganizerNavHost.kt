@@ -180,7 +180,6 @@ fun PictureOrganizerNavHost() {
         composable(Routes.IMPORT_IMAGES) {
             ImportScreen(
                 onBack = { navController.popBackStack() },
-                onImportFinished = { navController.popBackStack() },
             )
         }
         composable(

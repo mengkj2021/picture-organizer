@@ -10,6 +10,7 @@ import com.pictureorganizer.data.repository.UserPreferencesRepository
 import com.pictureorganizer.model.ImageListItem
 import com.pictureorganizer.model.ImageStatus
 import com.pictureorganizer.model.Tag
+import com.pictureorganizer.util.file.AppFileManager
 import com.pictureorganizer.util.image.ImageManager
 import com.pictureorganizer.util.image.ImageTagMetadata
 import kotlinx.coroutines.Dispatchers
@@ -25,8 +26,8 @@ import java.io.FileNotFoundException
 import java.io.IOException
 
 sealed interface ImportUiEffect {
-    /** 全部导入（含重试）成功，回主画面 */
-    data object ImportFinished : ImportUiEffect
+    /** F10：本批（含重试）全部成功，停留导入画面并提示完成 */
+    data class ImportCompleted(val successCount: Int) : ImportUiEffect
 }
 
 class ImportViewModel(
@@ -34,6 +35,7 @@ class ImportViewModel(
     private val imageManager: ImageManager,
     private val userPreferences: UserPreferencesRepository,
     private val tagRepository: TagRepository,
+    private val fileManager: AppFileManager,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ImportUiState())
     val uiState: StateFlow<ImportUiState> = _uiState.asStateFlow()
@@ -45,6 +47,9 @@ class ImportViewModel(
         viewModelScope.launch {
             val enabled = userPreferences.isImportCompressEnabled()
             _uiState.update { it.copy(compressEnabled = enabled) }
+        }
+        viewModelScope.launch {
+            cleanupPendingOrphans()
         }
     }
 
@@ -86,14 +91,14 @@ class ImportViewModel(
                 it.copy(isImporting = false, current = 0, total = 0)
             }
             if (failures.isEmpty()) {
-                _effects.send(ImportUiEffect.ImportFinished)
+                _effects.send(ImportUiEffect.ImportCompleted(uris.size))
             } else {
                 _uiState.update { it.copy(failedItems = failures) }
             }
         }
     }
 
-    /** 单张重试：成功则从失败列表移除；列表清空后回主画面 */
+    /** 单张重试：成功则从失败列表移除；列表清空后提示完成并留在本画面 */
     fun retryItem(uri: Uri) {
         if (_uiState.value.isImporting) return
         val target = _uiState.value.failedItems.firstOrNull { it.uri == uri } ?: return
@@ -112,12 +117,12 @@ class ImportViewModel(
                 it.copy(isImporting = false, current = 0, total = 0)
             }
             if (_uiState.value.failedItems.isEmpty()) {
-                _effects.send(ImportUiEffect.ImportFinished)
+                _effects.send(ImportUiEffect.ImportCompleted(1))
             }
         }
     }
 
-    /** 全部重试：逐张处理，全部成功后回主画面 */
+    /** 全部重试：逐张处理，全部成功后提示完成并留在本画面 */
     fun retryAll() {
         if (_uiState.value.isImporting) return
         val targets = _uiState.value.failedItems
@@ -128,20 +133,23 @@ class ImportViewModel(
                 it.copy(isImporting = true, current = 0, total = targets.size)
             }
             var done = 0
+            var successCount = 0
             targets.forEach { item ->
                 done++
                 _uiState.update {
                     it.copy(current = done, total = targets.size)
                 }
                 importSingle(item.uri, compressEnabled)
-                    .onSuccess { removeFailure(item.uri) }
-                    .onFailure { e -> updateFailure(item.uri, e) }
+                    .onSuccess {
+                        removeFailure(item.uri)
+                        successCount++
+                    }.onFailure { e -> updateFailure(item.uri, e) }
             }
             _uiState.update {
                 it.copy(isImporting = false, current = 0, total = 0)
             }
             if (_uiState.value.failedItems.isEmpty()) {
-                _effects.send(ImportUiEffect.ImportFinished)
+                _effects.send(ImportUiEffect.ImportCompleted(successCount))
             }
         }
     }
@@ -175,6 +183,16 @@ class ImportViewModel(
                         }
                     },
             )
+        }
+    }
+
+    private suspend fun cleanupPendingOrphans() {
+        withContext(Dispatchers.IO) {
+            val knownPaths =
+                ImageStatus.entries
+                    .flatMap { status -> repository.getItems(status) }
+                    .map { it.filePath }
+            fileManager.cleanupPendingOrphans(knownPaths)
         }
     }
 
@@ -235,9 +253,16 @@ class ImportViewModel(
         private val imageManager: ImageManager,
         private val userPreferences: UserPreferencesRepository,
         private val tagRepository: TagRepository,
+        private val fileManager: AppFileManager,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            ImportViewModel(repository, imageManager, userPreferences, tagRepository) as T
+            ImportViewModel(
+                repository,
+                imageManager,
+                userPreferences,
+                tagRepository,
+                fileManager,
+            ) as T
     }
 }

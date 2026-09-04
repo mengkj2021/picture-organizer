@@ -92,6 +92,30 @@ class AppFileManager(
     }
 
     /**
+     * F10：扫描 `pending/`，删除 DB 无记录的孤儿文件。
+     * @return 删除的文件数
+     */
+    fun cleanupPendingOrphans(knownRelativePaths: Collection<String>): Int {
+        val dir = dirFor(ImageStatus.Pending)
+        val names =
+            dir.listFiles()
+                ?.asSequence()
+                ?.filter { it.isFile }
+                ?.map { it.name }
+                ?.toList()
+                .orEmpty()
+        val orphans = PendingOrphanCleaner.orphanFileNames(names, knownRelativePaths)
+        var deleted = 0
+        orphans.forEach { name ->
+            val file = File(dir, name)
+            if (file.exists() && file.delete()) {
+                deleted++
+            }
+        }
+        return deleted
+    }
+
+    /**
      * 同目录重命名。返回新的相对路径。
      * @throws IllegalArgumentException 非法文件名或目标已存在
      * @throws IllegalStateException 源文件不存在或重命名失败

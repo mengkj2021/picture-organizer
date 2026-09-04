@@ -55,7 +55,6 @@ import com.pictureorganizer.util.image.ImageManager
 @Composable
 fun ImportScreen(
     onBack: () -> Unit,
-    onImportFinished: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -68,6 +67,7 @@ fun ImportScreen(
                     imageManager = ImageManager(context, app.fileManager),
                     userPreferences = app.userPreferencesRepository,
                     tagRepository = app.tagRepository,
+                    fileManager = app.fileManager,
                 ),
         )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -76,13 +76,24 @@ fun ImportScreen(
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                ImportUiEffect.ImportFinished -> onImportFinished()
+                is ImportUiEffect.ImportCompleted -> {
+                    snackbarHostState.showSnackbar(
+                        message =
+                            context.getString(
+                                R.string.import_completed,
+                                effect.successCount,
+                            ),
+                    )
+                }
             }
         }
     }
 
-    BackHandler(enabled = !state.isImporting) {
-        onBack()
+    // F10：导入中始终启用并吞掉返回（含系统键 / 手势 / 预测性返回）；空闲才 pop
+    BackHandler {
+        if (!state.isImporting) {
+            onBack()
+        }
     }
 
     val galleryLauncher =
@@ -107,9 +118,8 @@ fun ImportScreen(
                 title = { Text(stringResource(R.string.import_title)) },
                 navigationIcon = {
                     IconButton(
-                        onClick = {
-                            if (!state.isImporting) onBack()
-                        },
+                        onClick = onBack,
+                        enabled = !state.isImporting,
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -251,7 +261,7 @@ fun ImportScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = onImportFinished) {
+                TextButton(onClick = { viewModel.dismissFailures() }) {
                     Text(stringResource(R.string.import_failure_done))
                 }
             },

@@ -38,6 +38,7 @@
     <string name="import_compress_switch">按规则压缩</string>
     <string name="import_compress_hint">开启后：文件大于 2MB 或长边大于 1920px 时压缩为 JPEG（质量约 85）；关闭则原样导入。</string>
     <string name="import_progress">正在导入 %1$d/%2$d</string>
+    <string name="import_completed">%1$d 张导入完成</string>
     <string name="action_export_zip">打包导出</string>
     <string name="export_zip_title">打包导出</string>
     <string name="export_zip_stats">已确认 %1$d 张 · 当前匹配 %2$d 张</string>
