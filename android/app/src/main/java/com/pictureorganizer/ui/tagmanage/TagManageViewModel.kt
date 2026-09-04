@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pictureorganizer.R
+import com.pictureorganizer.data.repository.ImageRepository
 import com.pictureorganizer.data.repository.TagRepository
 import com.pictureorganizer.model.Tag
 import com.pictureorganizer.model.TagTemplate
@@ -20,6 +21,7 @@ import java.util.UUID
 
 class TagManageViewModel(
     private val tagRepository: TagRepository,
+    private val imageRepository: ImageRepository,
 ) : ViewModel() {
     private val editor = MutableStateFlow(EditorUi())
     private val _effects = Channel<TagManageUiEffect>(Channel.BUFFERED)
@@ -38,6 +40,7 @@ class TagManageViewModel(
                 tagDialog = ed.tagDialog,
                 templateDialog = ed.templateDialog,
                 confirmDeleteTagId = ed.confirmDeleteTagId,
+                cascadeDeleteTag = ed.cascadeDeleteTag,
                 confirmDeleteTemplateId = ed.confirmDeleteTemplateId,
                 isBusy = ed.isBusy,
             )
@@ -66,10 +69,12 @@ class TagManageViewModel(
             TagManageUiEvent.DismissTagDialog -> editor.update { it.copy(tagDialog = null) }
             is TagManageUiEvent.RequestDeleteTag ->
                 editor.update {
-                    it.copy(confirmDeleteTagId = event.id)
+                    it.copy(confirmDeleteTagId = event.id, cascadeDeleteTag = null)
                 }
             TagManageUiEvent.ConfirmDeleteTag -> confirmDeleteTag()
             TagManageUiEvent.CancelDeleteTag -> editor.update { it.copy(confirmDeleteTagId = null) }
+            TagManageUiEvent.ConfirmCascadeDeleteTag -> confirmCascadeDeleteTag()
+            TagManageUiEvent.CancelCascadeDeleteTag -> editor.update { it.copy(cascadeDeleteTag = null) }
 
             TagManageUiEvent.OpenAddTemplate ->
                 editor.update {
@@ -155,18 +160,67 @@ class TagManageViewModel(
         }
     }
 
+    /** 第一层确认后：无引用直接删；有引用弹出联动确认。 */
     private fun confirmDeleteTag() {
         val id = editor.value.confirmDeleteTagId ?: return
         viewModelScope.launch {
             editor.update { it.copy(isBusy = true, confirmDeleteTagId = null) }
-            runCatching { tagRepository.deleteTag(id) }
-                .onSuccess {
-                    _effects.send(TagManageUiEffect.ShowMessage(R.string.tag_manage_tag_deleted))
-                }.onFailure { e ->
+            runCatching {
+                val tag = tagRepository.getTag(id) ?: error("标签不存在")
+                val count = imageRepository.countImagesWithTag(tag.name)
+                if (count == 0) {
+                    tagRepository.deleteTag(id)
+                    DeleteOutcome.DeletedDirect
+                } else {
+                    DeleteOutcome.NeedsCascade(tag.id, tag.name, count)
+                }
+            }.onSuccess { outcome ->
+                when (outcome) {
+                    DeleteOutcome.DeletedDirect ->
+                        _effects.send(TagManageUiEffect.ShowMessage(R.string.tag_manage_tag_deleted))
+                    is DeleteOutcome.NeedsCascade ->
+                        editor.update {
+                            it.copy(
+                                cascadeDeleteTag =
+                                    CascadeDeleteTagState(
+                                        tagId = outcome.tagId,
+                                        tagName = outcome.tagName,
+                                        imageCount = outcome.imageCount,
+                                    ),
+                            )
+                        }
+                }
+            }.onFailure { e ->
+                _effects.send(
+                    TagManageUiEffect.ShowMessageText(e.message ?: "删除失败"),
+                )
+            }
+            editor.update { it.copy(isBusy = false) }
+        }
+    }
+
+    private fun confirmCascadeDeleteTag() {
+        val cascade = editor.value.cascadeDeleteTag ?: return
+        viewModelScope.launch {
+            editor.update { it.copy(isBusy = true, cascadeDeleteTag = null) }
+            runCatching {
+                val exifFailures = imageRepository.removeTagFromAllImages(cascade.tagName)
+                tagRepository.deleteTag(cascade.tagId)
+                exifFailures
+            }.onSuccess { exifFailures ->
+                _effects.send(TagManageUiEffect.ShowMessage(R.string.tag_manage_tag_deleted))
+                if (exifFailures > 0) {
                     _effects.send(
-                        TagManageUiEffect.ShowMessageText(e.message ?: "删除失败"),
+                        TagManageUiEffect.ShowMessageText(
+                            "标签已从图片移除，但有 $exifFailures 张 Exif 写入失败",
+                        ),
                     )
                 }
+            }.onFailure { e ->
+                _effects.send(
+                    TagManageUiEffect.ShowMessageText(e.message ?: "删除失败"),
+                )
+            }
             editor.update { it.copy(isBusy = false) }
         }
     }
@@ -248,19 +302,32 @@ class TagManageViewModel(
         }
     }
 
+    private sealed interface DeleteOutcome {
+        data object DeletedDirect : DeleteOutcome
+
+        data class NeedsCascade(
+            val tagId: String,
+            val tagName: String,
+            val imageCount: Int,
+        ) : DeleteOutcome
+    }
+
     private data class EditorUi(
         val selectedTab: TagManageTab = TagManageTab.Tags,
         val tagDialog: TagDialogState? = null,
         val templateDialog: TemplateDialogState? = null,
         val confirmDeleteTagId: String? = null,
+        val cascadeDeleteTag: CascadeDeleteTagState? = null,
         val confirmDeleteTemplateId: String? = null,
         val isBusy: Boolean = false,
     )
 
     class Factory(
         private val tagRepository: TagRepository,
+        private val imageRepository: ImageRepository,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = TagManageViewModel(tagRepository) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            TagManageViewModel(tagRepository, imageRepository) as T
     }
 }

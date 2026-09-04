@@ -44,4 +44,13 @@ interface ImageRepository {
         id: String,
         tags: List<String>,
     ): Boolean
+
+    /** F8：`tagsJson` 精确含该标签名的图片张数。 */
+    suspend fun countImagesWithTag(tagName: String): Int
+
+    /**
+     * F8：从所有引用图片去掉该标签名（写 `tagsJson` + Exif）。
+     * @return Exif 写入失败的张数（DB 仍会更新）
+     */
+    suspend fun removeTagFromAllImages(tagName: String): Int
 }

@@ -48,4 +48,45 @@ class ImageListItemTest {
         assertEquals(listOf("风景"), moved.tags)
         assertFalse(moved.tags.any { it in ImageListItem.STATUS_TAGS })
     }
+
+    @Test
+    fun removeTagName_removesExactMatch_keepsOthers() {
+        assertEquals(
+            listOf("旅行", "家人"),
+            ImageListItem.removeTagName(listOf("旅行", "工作", "家人"), "工作"),
+        )
+    }
+
+    @Test
+    fun removeTagName_missingName_unchanged() {
+        val tags = listOf("旅行", "家人")
+        assertEquals(tags, ImageListItem.removeTagName(tags, "工作"))
+    }
+
+    @Test
+    fun removeTagName_trimsTarget_andDropsAllExactHits() {
+        assertEquals(
+            listOf("A"),
+            ImageListItem.removeTagName(listOf("工作", "A", "工作"), "  工作  "),
+        )
+    }
+
+    @Test
+    fun removeTagName_blankTarget_unchanged() {
+        val tags = listOf("旅行")
+        assertEquals(tags, ImageListItem.removeTagName(tags, "  "))
+    }
+
+    @Test
+    fun countImagesWithTag_countsExactElementMatch() {
+        val images =
+            listOf(
+                listOf("旅行", "家人"),
+                listOf("工作"),
+                listOf("旅行"),
+                emptyList(),
+            )
+        assertEquals(2, ImageListItem.countImagesWithTag(images, "旅行"))
+        assertEquals(0, ImageListItem.countImagesWithTag(images, "不存在"))
+    }
 }

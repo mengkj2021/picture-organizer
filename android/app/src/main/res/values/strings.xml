@@ -113,7 +113,8 @@
     <string name="tag_manage_saved">已保存</string>
     <string name="tag_manage_tag_deleted">标签已删除</string>
     <string name="tag_manage_template_deleted">模板已删除</string>
-    <string name="tag_manage_confirm_delete_tag">确定删除该标签？已写入图片的标签名不会自动清除。</string>
+    <string name="tag_manage_confirm_delete_tag">确定删除该标签？</string>
+    <string name="tag_manage_confirm_delete_tag_in_use">该标签被 %1$d 张图片使用，继续将一并从这些图片移除（含 Exif）。</string>
     <string name="tag_manage_confirm_delete_template">确定删除该模板？</string>
     <string name="tag_manage_pick_tags">选择包含的标签</string>
     <string name="tag_manage_as_default">设为默认模板</string>

@@ -15,6 +15,8 @@ data class TagManageUiState(
     val tagDialog: TagDialogState? = null,
     val templateDialog: TemplateDialogState? = null,
     val confirmDeleteTagId: String? = null,
+    /** F8：有引用时的第二层确认 */
+    val cascadeDeleteTag: CascadeDeleteTagState? = null,
     val confirmDeleteTemplateId: String? = null,
     val isBusy: Boolean = false,
 )
@@ -29,6 +31,12 @@ data class TemplateDialogState(
     val name: String = "",
     val selectedTagNames: Set<String> = emptySet(),
     val isDefault: Boolean = false,
+)
+
+data class CascadeDeleteTagState(
+    val tagId: String,
+    val tagName: String,
+    val imageCount: Int,
 )
 
 sealed interface TagManageUiEvent {
@@ -57,6 +65,10 @@ sealed interface TagManageUiEvent {
     data object ConfirmDeleteTag : TagManageUiEvent
 
     data object CancelDeleteTag : TagManageUiEvent
+
+    data object ConfirmCascadeDeleteTag : TagManageUiEvent
+
+    data object CancelCascadeDeleteTag : TagManageUiEvent
 
     data object OpenAddTemplate : TagManageUiEvent
 

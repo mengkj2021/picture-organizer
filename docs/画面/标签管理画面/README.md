@@ -51,8 +51,8 @@
 
 ## 8. 数据依赖
 
-- `TagManageViewModel` + `TagRepository`（C4）
-- 删库标签不改 `images.tagsJson`
+- `TagManageViewModel` + `TagRepository` + `ImageRepository`（C4 / **F8**）
+- **F8**：删库标签时判断图片引用；有引用二次确认后批量去掉 `tagsJson` 与 Exif；模板内同名文本不联动
 
 ## 9. 待定事项
 
@@ -63,3 +63,4 @@
 | 日期 | 变更 | 关联提交 |
 |---|---|---|
 | 2026-08-30 | C5 建立并实现 | （待提交） |
+| 2026-09-04 | F8：删除标签联动清理图片引用 | 见开发日志-2026-09-04-F8 |

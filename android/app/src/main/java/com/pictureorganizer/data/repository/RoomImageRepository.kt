@@ -116,6 +116,30 @@ class RoomImageRepository(
             ImageTagMetadata.writeUserTags(file, normalized)
         }
 
+    override suspend fun countImagesWithTag(tagName: String): Int =
+        withContext(Dispatchers.IO) {
+            val lists = imageDao.getAll().map { converters.fromTagsJson(it.tagsJson) }
+            ImageListItem.countImagesWithTag(lists, tagName)
+        }
+
+    override suspend fun removeTagFromAllImages(tagName: String): Int =
+        withContext(Dispatchers.IO) {
+            val target = tagName.trim()
+            if (target.isEmpty()) return@withContext 0
+            var exifFailures = 0
+            for (entity in imageDao.getAll()) {
+                val tags = converters.fromTagsJson(entity.tagsJson)
+                if (target !in tags) continue
+                val next = ImageListItem.userTagsOf(ImageListItem.removeTagName(tags, target))
+                imageDao.insert(entity.copy(tagsJson = converters.toTagsJson(next)))
+                val file = fileManager.absoluteFile(entity.filePath)
+                if (!ImageTagMetadata.writeUserTags(file, next)) {
+                    exifFailures++
+                }
+            }
+            exifFailures
+        }
+
     override suspend fun migrateFlatPathsIfNeeded() {
         withContext(Dispatchers.IO) {
             fileManager.ensureAllDirs()

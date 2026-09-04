@@ -62,7 +62,7 @@ fun TagManageScreen(
     val app = context.applicationContext as PictureOrganizerApplication
     val viewModel: TagManageViewModel =
         viewModel(
-            factory = TagManageViewModel.Factory(app.tagRepository),
+            factory = TagManageViewModel.Factory(app.tagRepository, app.imageRepository),
         )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -175,6 +175,18 @@ fun TagManageScreen(
             message = stringResource(R.string.tag_manage_confirm_delete_tag),
             onConfirm = { viewModel.onEvent(TagManageUiEvent.ConfirmDeleteTag) },
             onDismiss = { viewModel.onEvent(TagManageUiEvent.CancelDeleteTag) },
+        )
+    }
+
+    state.cascadeDeleteTag?.let { cascade ->
+        ConfirmDeleteDialog(
+            message =
+                stringResource(
+                    R.string.tag_manage_confirm_delete_tag_in_use,
+                    cascade.imageCount,
+                ),
+            onConfirm = { viewModel.onEvent(TagManageUiEvent.ConfirmCascadeDeleteTag) },
+            onDismiss = { viewModel.onEvent(TagManageUiEvent.CancelCascadeDeleteTag) },
         )
     }
 

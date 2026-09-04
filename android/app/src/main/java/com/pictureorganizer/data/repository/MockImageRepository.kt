@@ -92,5 +92,23 @@ object MockImageRepository : ImageRepository {
         return true
     }
 
+    override suspend fun countImagesWithTag(tagName: String): Int =
+        ImageListItem.countImagesWithTag(items.value.map { it.tags }, tagName)
+
+    override suspend fun removeTagFromAllImages(tagName: String): Int {
+        val target = tagName.trim()
+        if (target.isEmpty()) return 0
+        items.update { list ->
+            list.map { item ->
+                if (target !in item.tags) {
+                    item
+                } else {
+                    item.copy(tags = ImageListItem.removeTagName(item.tags, target))
+                }
+            }
+        }
+        return 0
+    }
+
     override suspend fun migrateFlatPathsIfNeeded() = Unit
 }

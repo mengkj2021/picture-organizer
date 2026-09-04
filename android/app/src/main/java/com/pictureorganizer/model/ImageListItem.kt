@@ -26,5 +26,25 @@ data class ImageListItem(
         val STATUS_TAGS = setOf("待处理", "已确认", "回收站")
 
         fun userTagsOf(tags: List<String>): List<String> = tags.filter { it !in STATUS_TAGS }
+
+        /** F8：从标签列表精确去掉指定名（trim 后比对）；空目标不改动。 */
+        fun removeTagName(
+            tags: List<String>,
+            name: String,
+        ): List<String> {
+            val target = name.trim()
+            if (target.isEmpty()) return tags
+            return tags.filter { it != target }
+        }
+
+        /** F8：统计「标签列表精确含该名」的图片张数。 */
+        fun countImagesWithTag(
+            imageTagLists: List<List<String>>,
+            name: String,
+        ): Int {
+            val target = name.trim()
+            if (target.isEmpty()) return 0
+            return imageTagLists.count { target in it }
+        }
     }
 }

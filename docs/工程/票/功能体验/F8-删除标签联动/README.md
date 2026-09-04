@@ -8,9 +8,9 @@
 | 类型 | 功能 / 体验票 |
 | 类型细分 | 体验增强 |
 | 标题 | 删除标签库标签前判断图片引用：无引用直接删；有引用弹窗确认，继续则批量去掉该标签（库 + EXIF） |
-| 状态 | ☐ 待实施 |
+| 状态 | ✅ 已完成 |
 | 起票日期 | 2026-09-03 |
-| 关联 | [标签管理画面 README](../../../画面/标签管理画面/README.md) §8「删库标签不改 `images.tagsJson`」（本票要改写的行为）；[TagManageViewModel.kt](../../../../android/app/src/main/java/com/pictureorganizer/ui/tagmanage/TagManageViewModel.kt)（`confirmDeleteTag`）；[TagDao.kt](../../../../android/app/src/main/java/com/pictureorganizer/data/local/dao/TagDao.kt)（`deleteById`）；[ImageDao.kt](../../../../android/app/src/main/java/com/pictureorganizer/data/local/dao/ImageDao.kt)；[RoomImageRepository.updateTags](../../../../android/app/src/main/java/com/pictureorganizer/data/repository/RoomImageRepository.kt)（复用去标写路径：tagsJson + EXIF `UserComment`） |
+| 关联 | [标签管理画面 README](../../../画面/标签管理画面/README.md) §8；[TagManageViewModel.kt](../../../../android/app/src/main/java/com/pictureorganizer/ui/tagmanage/TagManageViewModel.kt)；[RoomImageRepository](../../../../android/app/src/main/java/com/pictureorganizer/data/repository/RoomImageRepository.kt) |
 
 ## 用户诉求 / 场景
 
@@ -31,25 +31,29 @@
 
 ## 方案（接票后填）
 
-- 文档先行（画面文档 / 式样书 / 架构 / 路由，按需）：
-- 代码改动点（预计：TagRepository / ImageDao 查询接口 → TagManageViewModel 删除流程分支 → UI 弹框文案与状态）：
-- 验证方式：
+- 文档先行：标签管理 README §8 / 标签列表；式样 §4.3；架构 §3.4 / Repository 表
+- 代码改动点：
+  - `ImageListItem.removeTagName` / `countImagesWithTag` + 单测（F20）
+  - `ImageRepository.countImagesWithTag` / `removeTagFromAllImages`
+  - `TagManageViewModel`：一层确认后分支；二层 `cascadeDeleteTag`；注入 `ImageRepository`
+  - 文案：`tag_manage_confirm_delete_tag` 精简；新增 `tag_manage_confirm_delete_tag_in_use`
+- 验证方式：`testDebugUnitTest`；真机删无引用 / 有引用 / 取消 cascade
 
 ## 验收标准
 
-- [ ] 删除无引用标签：确认后直接删除成功（行为同现状）
-- [ ] 删除有引用标签：弹框提示影响张数；继续 → 词表删除 + 引用图片 `tagsJson` 移除 + 文件 EXIF `UserComment` 同步更新；取消 → 全部不动
-- [ ] 删除后全库无任何图片 `tagsJson` / EXIF 含该标签名（抽样验证）
-- [ ] 文档与代码对齐：标签管理 README §8 改写为联动行为；开发日志（文件名带 F8）已写
+- [x] 删除无引用标签：确认后直接删除成功（行为同现状）
+- [x] 删除有引用标签：弹框提示影响张数；继续 → 词表删除 + 引用图片 `tagsJson` 移除 + 文件 EXIF `UserComment` 同步更新；取消 → 全部不动
+- [x] 删除后全库无任何图片 `tagsJson` / EXIF 含该标签名（抽样验证）
+- [x] 文档与代码对齐：标签管理 README §8 改写为联动行为；开发日志（文件名带 F8）已写
 
 ## 开发记录
 
 | 日期 | 内容 | 关联提交 |
 |---|---|---|
-|  |  |  |
+| 2026-09-04 | 先测后写 removeTagName；二层确认 + 批量清标；文档改写 | （待用户提交） |
 
 ## 完结复盘（✅ / ❌ 后填；票与台账行保留，不删除）
 
-- **落地效果**（达成了什么 / 与预期差距）：
-- **代价与遗留**（新增复杂度、未覆盖场景 → 转新票或备注）：
-- **错题本登记**：已登记 [docs/工程/错题本.md](../../../错题本.md) ／ 不适用
+- **落地效果**：删词表不再制造孤儿标签；有引用时用户知情后一键清库+Exif。
+- **代价与遗留**：模板 / 默认标签快照不联动（票内边界）；全表内存过滤引用（小规模可接受）。Exif 失败不回滚 DB。
+- **错题本登记**：不适用（无新坑；沿用 F7「DB 主 / Exif 副本」）

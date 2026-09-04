@@ -23,7 +23,7 @@ interface TagRepository {
     /** @throws IllegalArgumentException 空名或与其它行重名 */
     suspend fun updateTag(tag: Tag)
 
-    /** 不修改 images.tagsJson；模板内同名字符串保留 */
+    /** 删除词表项；图片引用由调用方（F8）先清理。模板内同名字符串保留 */
     suspend fun deleteTag(id: String)
 
     suspend fun insertTemplate(template: TagTemplate)
