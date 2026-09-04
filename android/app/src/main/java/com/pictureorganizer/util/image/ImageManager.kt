@@ -200,6 +200,17 @@ class ImageManager(
         }
     }
 
+    /**
+     * F7：压缩 / 落盘前从源 Uri 读本应用 Exif 用户标签。
+     * 打不开流 / 非 JPEG / 无注释 → 空列表，不抛错。
+     */
+    fun readUserTagsFromUri(uri: Uri): List<String> =
+        runCatching {
+            context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
+                ImageTagMetadata.readUserTags(afd.fileDescriptor)
+            } ?: emptyList()
+        }.getOrDefault(emptyList())
+
     /** 查询 Uri 的显示名（失败时回退到路径末段），供失败明细展示 */
     fun displayNameOf(uri: Uri): String {
         val queried =

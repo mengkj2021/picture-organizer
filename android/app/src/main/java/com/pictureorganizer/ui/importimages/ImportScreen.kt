@@ -67,6 +67,7 @@ fun ImportScreen(
                     repository = app.imageRepository,
                     imageManager = ImageManager(context, app.fileManager),
                     userPreferences = app.userPreferencesRepository,
+                    tagRepository = app.tagRepository,
                 ),
         )
     val state by viewModel.uiState.collectAsStateWithLifecycle()

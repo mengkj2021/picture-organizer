@@ -56,6 +56,7 @@
 - `ImportScreen` / `ImportViewModel`
 - `AppFileManager`、`ImageManager`；`ImageRepository.insert`
 - `UserPreferencesRepository`：`import_compress_enabled`、`default_tag_names`（合并进导入标签）
+- **F7**：导入前从源 Uri 读 Exif `UserComment`，与默认标签并集去重后写 `tagsJson`，并进词表
 - 详见 [架构设计.md](../../设计/架构设计.md)
 
 ## 9. 待定事项
@@ -72,3 +73,4 @@
 | 2026-08-31 | 文档补 Preferences（压缩 + 默认标签） | — |
 | 2026-09-01 | P1：导入失败明细弹窗 + 单张/全部重试 | 见开发日志 |
 | 2026-09-02 | Bug4 返回；F3 重复导入提示 | 见开发日志 |
+| 2026-09-04 | F7：压缩前 Exif 回读 + 默认标签并集 + 词表入库 | 见开发日志-2026-09-04-F7 |

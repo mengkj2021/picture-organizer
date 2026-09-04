@@ -8,7 +8,7 @@
 | 类型 | 功能 / 体验票 |
 | 类型细分 | 新功能 |
 | 标题 | 导入时从 Exif 回读标签并入库（文件内标签副本可迁移恢复） |
-| 状态 | ☐ 待实施 |
+| 状态 | ✅ 已完成 |
 | 起票日期 | 2026-09-03 |
 | 关联 | [标签.md](../../../画面/图片详细画面/标签.md) §6 待定「导入时从 Exif 回读」；[ImageTagMetadata.kt](../../../../android/app/src/main/java/com/pictureorganizer/util/image/ImageTagMetadata.kt)（`readUserTags` 现成但无调用方） |
 
@@ -28,25 +28,29 @@
 
 ## 方案（接票后填）
 
-- 文档先行（画面文档 / 式样书 / 架构 / 路由，按需）：
-- 代码改动点（预计入口 `ImportViewModel` / `RoomImageRepository.insert` 附近；复用 `ImageTagMetadata.readUserTags`）：
-- 验证方式：
+- 文档先行（画面文档 / 式样书 / 架构 / 路由，按需）：`标签.md` §6、详情 README §9、导入 README、式样 §4.1、架构 §3.2
+- 代码改动点：
+  - `ImageTagMetadata`：`parseUserCommentJson` / `mergeImportTags` / `readUserTags(InputStream)`
+  - `ImageManager.readUserTagsFromUri`（压缩前读源）
+  - `ImportViewModel`：合并后 insert + `TagRepository` 词表入库
+  - 单测：`ImageTagMetadataTest`（`mergeImportTags`，F20）
+- 验证方式：`testDebugUnitTest`（含 ImageTagMetadataTest 5 用例）；真机：带 Exif 标签 JPEG 再导入核对 tagsJson / 词表
 
 ## 验收标准
 
-- [ ] 导入含 Exif 标签的 JPEG：`tagsJson` 含回读标签且与默认标签去重
-- [ ] 非 JPEG / 无标签 / 坏 JSON：导入照常，不报错
-- [ ] 文档与代码对齐：勾选 [标签.md](../../../画面/图片详细画面/标签.md) §6 与图片详细画面 README §9 的「导入时从 Exif 回读」待办
-- [ ] 开发日志（文件名带 F7）已写
+- [x] 导入含 Exif 标签的 JPEG：`tagsJson` 含回读标签且与默认标签去重
+- [x] 非 JPEG / 无标签 / 坏 JSON：导入照常，不报错
+- [x] 文档与代码对齐：勾选 [标签.md](../../../画面/图片详细画面/标签.md) §6 与图片详细画面 README §9 的「导入时从 Exif 回读」待办
+- [x] 开发日志（文件名带 F7）已写
 
 ## 开发记录
 
 | 日期 | 内容 | 关联提交 |
 |---|---|---|
-|  |  |  |
+| 2026-09-04 | 先测后写 mergeImportTags；压缩前回读 + 词表；文档勾选 | （待用户提交） |
 
 ## 完结复盘（✅ / ❌ 后填；票与台账行保留，不删除）
 
-- **落地效果**（达成了什么 / 与预期差距）：
-- **代价与遗留**（新增复杂度、未覆盖场景 → 转新票或备注）：
-- **错题本登记**：已登记 [docs/工程/错题本.md](../../../错题本.md) ／ 不适用
+- **落地效果**：导入闭环「标签跟文件走」：压缩前读源 Exif → 与默认标签并集去重写库 → 进词表；`readUserTags` 不再是死代码。
+- **代价与遗留**：开压缩落盘仍会剥落盘文件 Exif（已知局限，`tagsJson` 不受影响）；`parseUserCommentJson` 依赖 `org.json`，JVM 单测未覆盖（对齐 F16 裁剪，仅测 merge）。
+- **错题本登记**：已登记 [docs/工程/错题本.md](../../../错题本.md)（压缩前读 Exif）

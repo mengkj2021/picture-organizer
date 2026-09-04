@@ -5,10 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pictureorganizer.data.repository.ImageRepository
+import com.pictureorganizer.data.repository.TagRepository
 import com.pictureorganizer.data.repository.UserPreferencesRepository
 import com.pictureorganizer.model.ImageListItem
 import com.pictureorganizer.model.ImageStatus
+import com.pictureorganizer.model.Tag
 import com.pictureorganizer.util.image.ImageManager
+import com.pictureorganizer.util.image.ImageTagMetadata
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +33,7 @@ class ImportViewModel(
     private val repository: ImageRepository,
     private val imageManager: ImageManager,
     private val userPreferences: UserPreferencesRepository,
+    private val tagRepository: TagRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ImportUiState())
     val uiState: StateFlow<ImportUiState> = _uiState.asStateFlow()
@@ -180,18 +184,18 @@ class ImportViewModel(
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
+                // F7：压缩前读源 Exif（重编码会剥离 UserComment）
+                val exifTags = imageManager.readUserTagsFromUri(uri)
                 val prepared = imageManager.prepareForImport(uri, compressEnabled)
                 val now = System.currentTimeMillis()
-                val defaultTags =
-                    userPreferences
-                        .getDefaultTagNames()
-                        .filter { it !in ImageListItem.STATUS_TAGS }
+                val defaultTags = userPreferences.getDefaultTagNames().toList()
+                val mergedTags = ImageTagMetadata.mergeImportTags(defaultTags, exifTags)
                 val item =
                     ImageListItem(
                         id = prepared.id,
                         description = prepared.fileName,
                         status = ImageStatus.Pending,
-                        tags = defaultTags,
+                        tags = mergedTags,
                     )
                 repository.insert(
                     item = item,
@@ -199,8 +203,23 @@ class ImportViewModel(
                     fileName = prepared.fileName,
                     importedAt = now,
                 )
+                // F7 / S2：回读与默认标签一并进词表（已存在跳过）
+                ensureTagsInLibrary(mergedTags)
             }
         }
+
+    private suspend fun ensureTagsInLibrary(names: List<String>) {
+        if (names.isEmpty()) return
+        val existing = tagRepository.getTags().map { it.name }.toHashSet()
+        names.forEach { name ->
+            val trimmed = name.trim()
+            if (trimmed.isEmpty() || trimmed in ImageListItem.STATUS_TAGS || trimmed in existing) return@forEach
+            runCatching {
+                tagRepository.insertTag(Tag(id = "", name = trimmed))
+                existing.add(trimmed)
+            }
+        }
+    }
 
     private fun errorKindOf(e: Throwable): ImportErrorKind =
         when (e) {
@@ -215,8 +234,10 @@ class ImportViewModel(
         private val repository: ImageRepository,
         private val imageManager: ImageManager,
         private val userPreferences: UserPreferencesRepository,
+        private val tagRepository: TagRepository,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = ImportViewModel(repository, imageManager, userPreferences) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            ImportViewModel(repository, imageManager, userPreferences, tagRepository) as T
     }
 }
