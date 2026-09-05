@@ -98,7 +98,8 @@ class AppFileManager(
     fun cleanupPendingOrphans(knownRelativePaths: Collection<String>): Int {
         val dir = dirFor(ImageStatus.Pending)
         val names =
-            dir.listFiles()
+            dir
+                .listFiles()
                 ?.asSequence()
                 ?.filter { it.isFile }
                 ?.map { it.name }

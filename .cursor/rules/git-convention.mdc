@@ -1,9 +1,9 @@
 ---
-description: git 提交纪律，中文提交 -F 文件、禁 git add .、禁 --force，push 前 ktlint 门禁与自检
+description: git 提交纪律，中文提交 -F 文件、禁 git add .、禁 --force，ticket/ 分支与绿黄红档，push 前 ktlint 门禁与自检
 globs: **/*
 alwaysApply: true
 enabled: true
-updatedAt: 2026-09-03
+updatedAt: 2026-09-05
 provider: both
 ---
 
@@ -32,6 +32,18 @@ provider: both
 3. `git commit -F 提交说明.txt`——说明改了什么、为什么；commit 信息带票号（如 `Bug2 …`、`S2 …`、`F1 …`）
 4. `git push`（正常推送即可；**禁止** `--force`，除非用户明确确认要改写历史）
 5. 是否 commit / push 由用户决定，不主动越权执行
+
+## 工作分支（F29）
+
+命名：`ticket/票号-简述`（例：`ticket/F11-导入重名询问`）。档位判定见 `shared/prompts/功能开发.md`。
+
+| 档 | 策略 |
+|---|---|
+| 绿 | 不强制开分支，可在当前分支改 |
+| 黄 | **建议**开 `ticket/…`，不强制 |
+| 红 / 多子票并行 | **应当**开分支 |
+
+例外：本票已在当前分支提交过半，不必中途再开 `ticket/` 分叉。merge / push 仍由用户决定；禁止擅自 `--force`。
 
 ## 勿提交内容（摘要）
 

@@ -327,7 +327,6 @@ class TagManageViewModel(
         private val imageRepository: ImageRepository,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            TagManageViewModel(tagRepository, imageRepository) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = TagManageViewModel(tagRepository, imageRepository) as T
     }
 }
