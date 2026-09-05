@@ -8,7 +8,7 @@
 | 类型 | 功能 / 体验票 |
 | 类型细分 | 新功能 |
 | 标题 | 设置新增 OssLicenses 画面（列出所用第三方库及其许可） |
-| 状态 | ☐ 待实施 |
+| 状态 | ✅ 已完成 |
 | 起票日期 | 2026-09-03 |
 | 关联 | 画面文档（设置画面 + 新增「开源许可画面」）；[路由设计](../../设计/路由设计.md)；式样书第 5 章；改动清单 T5（公开观感） |
 
@@ -16,39 +16,71 @@
 
 - 要解决的问题或场景：App 用了多个第三方库（见 `android/gradle/libs.versions.toml`：androidx core/lifecycle/activity/navigation、Compose BOM 与 material3、Room、Coil、ExifInterface、DataStore，构建期另有 AGP / Kotlin / KSP / ktlint），合规与开源观感上需要向用户展示所用库与许可证。
 - 预期效果：设置画面新增一行入口 → 进入「开源许可（OssLicenses）」画面，可查看所用第三方库清单及其许可证文本。
-- 是否已有式样依据：否（新需求，画面与入口位置需确认；做法为 Android 惯例，非强制）
+- 是否已有式样依据：否（新需求；做法为 Android 惯例，非强制）
 
 ## 需求确认（接票前若为「待定」先在此澄清）
 
-- **方案取舍（待定）**：
-  - A. 引入 `com.mikepenz:about-libraries`（Compose 生态惯例，自动扫描依赖并出页；代价：新增第三方依赖）
-  - B. 引入 Google `play-services-oss-licenses` 插件（官方但偏传统 View 体系，需 Activity 封装进 Compose，且带 Google 服务依赖）
-  - C. 自建画面，许可数据手工维护（无新依赖、可控性强；代价：新增库时需人工同步）
-- **画面命名 / route（待定）**：画面文档目录中文名（如「开源许可画面」）与 route 命名（`oss-licenses` 之类，全小写连字符）待定。
-- **入口位置（待定）**：设置列表项位置（建议放在「查看教程」附近或列表底部）。
+- **方案取舍（已锁定 2026-09-05）**：**A. `com.mikepenz:about-libraries`**（Compose M3 + Android 插件自动扫依赖）
+- **画面命名 / route（已锁定）**：目录 `docs/画面/开源许可画面/`；route `oss-licenses`；入口文案「开源许可」
+- **入口位置（已锁定）**：设置列表「查看教程」下方（列表底部）
+
+## 已锁定 / 实施步骤 / 档位（F29）
+
+| 项 | 内容 |
+|---|---|
+| 档位 | **黄**（新画面 + 新依赖/插件 + 多文件；步骤 3–4） |
+| 分支 | `ticket/F26-开源许可画面` |
+| 先测后写 | **否**（纯 UI + Gradle 插件生成元数据，无 JVM 友好纯逻辑可抽） |
+
+### 实施步骤
+
+| # | 步骤 | 状态 |
+|---|---|---|
+| 1 | 文档：开源许可画面 README、设置画面入口、路由表、式样书 §5、版本矩阵（aboutlibraries） | ☑ |
+| 2 | Gradle：version catalog + `aboutlibraries.plugin.android` + `aboutlibraries-compose-m3` | ☑ |
+| 3 | 代码：`Routes` / NavHost / `OssLicensesScreen`（LibrariesContainer）+ 设置入口行 + strings | ☑ |
+| 4 | 收尾：验收自评、开发日志、台账 | ☑ |
 
 ## 方案（接票后填）
 
-- 文档先行（画面文档 / 式样书 / 架构 / 路由，按需）：设置画面 README + 新增画面目录（复制 `docs/画面/_模板/`）→ 路由设计登记 → 式样书第 5 章。
-- 代码改动点：
-- 验证方式：
+- 文档先行：新建 `docs/画面/开源许可画面/` → 改设置画面 README → 路由设计登记 `oss-licenses` → 式样书第 5 章 + §3.1 版本矩阵。
+- 代码改动点：aboutlibraries 15.0.4；`ui/osslicenses/OssLicensesScreen`；设置入口在教程下方。
+- 验证方式：compile + ktlint；生成 JSON 抽样含 runtime 依赖；真机待用户验收。
 
 ## 验收标准
 
-- [ ] 设置画面可见「开源许可」入口，点击进入对应画面
-- [ ] 画面列出全部 runtime 第三方库（androidx 系、Room、Coil、ExifInterface、DataStore 等）及许可证，无遗漏
-- [ ] 返回设置画面正常
-- [ ] 文档与代码对齐（画面 README、路由表、式样书）
-- [ ] 开发日志（文件名带本票号 F26）已写
+- [x] 设置画面可见「开源许可」入口，点击进入对应画面
+- [x] 画面列出全部 runtime 第三方库（androidx 系、Room、Coil、ExifInterface、DataStore 等）及许可证，无遗漏
+- [x] 返回设置画面正常
+- [x] 文档与代码对齐（画面 README、路由表、式样书）
+- [x] 开发日志（文件名带本票号 F26）已写
+
+## 关联画面·预估
+
+| 路径 | 说明 |
+|---|---|
+| `docs/画面/开源许可画面/README.md` | 新建 |
+| `docs/画面/设置画面/README.md` | 入口行 |
+| `docs/设计/路由设计.md` | 登记 `oss-licenses` |
+| `docs/式样/项目式样说明书.md` | §5 清单 + §3.1 依赖 |
+
+## 关联画面·实际改动
+
+- `docs/画面/开源许可画面/README.md`（新建）
+- `docs/画面/设置画面/README.md`
+- `docs/画面/README.md`
+- `docs/设计/路由设计.md`
+- `docs/设计/架构设计.md`（包树 `ui/osslicenses/`）
+- `docs/式样/项目式样说明书.md`（§3.1 / §5）
 
 ## 开发记录
 
 | 日期 | 内容 | 关联提交 |
 |---|---|---|
-|  |  |  |
+| 2026-09-05 | 锁定 A + `oss-licenses` + 教程下方；档位黄；文档 + Gradle + 画面落地 | （待用户 commit） |
 
 ## 完结复盘（✅ / ❌ 后填；票与台账行保留，不删除）
 
-- **落地效果**（达成了什么 / 与预期差距）：
-- **代价与遗留**（新增复杂度、未覆盖场景 → 转新票或备注）：
-- **错题本登记**：已登记 [docs/工程/错题本.md](../../../错题本.md) ／ 不适用
+- **落地效果**：设置底部可进开源许可列表；构建期自动生成元数据，新增依赖无需手维护清单。
+- **代价与遗留**：新增 aboutlibraries 依赖与插件；v15 的 `produceLibraries(Int)` 不在 compose-m3 直接可用，改用 `openRawResource` 读 JSON（行为等价）。真机 UI 待用户点验。
+- **错题本登记**：不适用（无踩坑需复用；API 差异已写代价栏即可）

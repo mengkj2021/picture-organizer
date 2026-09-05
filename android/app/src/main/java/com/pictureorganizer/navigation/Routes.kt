@@ -15,6 +15,7 @@ object Routes {
     const val RENAME_TEMPLATE_MANAGE = "rename-template-manage"
     const val DEFAULT_TAGS = "default-tags"
     const val EXPORT_ZIP = "export-zip"
+    const val OSS_LICENSES = "oss-licenses"
 
     fun imageDetail(imageId: String): String = "image-detail/$imageId"
 

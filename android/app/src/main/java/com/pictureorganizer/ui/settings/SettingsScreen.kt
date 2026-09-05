@@ -38,6 +38,7 @@ fun SettingsScreen(
     onNavigateToRenameTemplates: () -> Unit,
     onNavigateToDefaultTags: () -> Unit,
     onNavigateToTutorial: () -> Unit,
+    onNavigateToOssLicenses: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -115,6 +116,14 @@ fun SettingsScreen(
                     desc = stringResource(R.string.settings_tutorial_desc),
                     icon = { Icon(Icons.Default.Info, contentDescription = null) },
                     onClick = onNavigateToTutorial,
+                )
+            }
+            item {
+                SettingsRow(
+                    title = stringResource(R.string.settings_oss_licenses),
+                    desc = stringResource(R.string.settings_oss_licenses_desc),
+                    icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
+                    onClick = onNavigateToOssLicenses,
                 )
             }
         }

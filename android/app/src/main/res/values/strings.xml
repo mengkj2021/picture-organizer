@@ -98,6 +98,9 @@
     <string name="settings_import_duplicate_ask_desc">原图名与库中相同的，导入前逐张确认</string>
     <string name="settings_tutorial">查看教程</string>
     <string name="settings_tutorial_desc">再次浏览使用引导</string>
+    <string name="settings_oss_licenses">开源许可</string>
+    <string name="settings_oss_licenses_desc">查看所用第三方库及其许可证</string>
+    <string name="oss_licenses_title">开源许可</string>
     <string name="rename_template_manage_title">重命名模板</string>
     <string name="rename_template_empty">暂无模板，点右下角添加</string>
     <string name="rename_template_add">添加模板</string>

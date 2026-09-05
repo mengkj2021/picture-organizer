@@ -26,6 +26,7 @@ import com.pictureorganizer.ui.importimages.ImportScreen
 import com.pictureorganizer.ui.main.MainScreen
 import com.pictureorganizer.ui.main.MainUiEvent
 import com.pictureorganizer.ui.main.MainViewModel
+import com.pictureorganizer.ui.osslicenses.OssLicensesScreen
 import com.pictureorganizer.ui.renametemplate.RenameTemplateManageScreen
 import com.pictureorganizer.ui.renametemplate.RenameTemplateManageViewModel
 import com.pictureorganizer.ui.settings.SettingsScreen
@@ -207,6 +208,14 @@ fun PictureOrganizerNavHost() {
                 onNavigateToTutorial = {
                     navController.navigate(Routes.tutorial(fromSettings = true))
                 },
+                onNavigateToOssLicenses = {
+                    navController.navigate(Routes.OSS_LICENSES)
+                },
+            )
+        }
+        composable(Routes.OSS_LICENSES) {
+            OssLicensesScreen(
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Routes.TAG_MANAGE) {
