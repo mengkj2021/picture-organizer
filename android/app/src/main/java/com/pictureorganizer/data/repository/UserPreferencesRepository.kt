@@ -35,6 +35,12 @@ class UserPreferencesRepository(
             prefs[KEY_IMPORT_COMPRESS] ?: true
         }
 
+    /** F11：导入重名是否询问（默认开） */
+    val importDuplicateAskEnabled: Flow<Boolean> =
+        dataStore.data.map { prefs ->
+            prefs[KEY_IMPORT_DUPLICATE_ASK] ?: true
+        }
+
     suspend fun isTutorialCompleted(): Boolean = tutorialCompleted.first()
 
     suspend fun setTutorialCompleted(completed: Boolean = true) {
@@ -63,11 +69,20 @@ class UserPreferencesRepository(
         }
     }
 
+    suspend fun isImportDuplicateAskEnabled(): Boolean = importDuplicateAskEnabled.first()
+
+    suspend fun setImportDuplicateAskEnabled(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[KEY_IMPORT_DUPLICATE_ASK] = enabled
+        }
+    }
+
     companion object {
         private const val SEPARATOR = "\u001f"
         private val KEY_TUTORIAL_COMPLETED = booleanPreferencesKey("tutorial_completed")
         private val KEY_DEFAULT_TAGS = stringPreferencesKey("default_tag_names")
         private val KEY_IMPORT_COMPRESS = booleanPreferencesKey("import_compress_enabled")
+        private val KEY_IMPORT_DUPLICATE_ASK = booleanPreferencesKey("import_duplicate_ask_enabled")
 
         private fun parseTagNames(raw: String?): Set<String> {
             if (raw.isNullOrBlank()) return emptySet()

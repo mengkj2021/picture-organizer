@@ -47,6 +47,7 @@ fun ImageEntity.toListItem(): ImageListItem {
         status = statusEnum,
         filePath = filePath,
         importedAt = importedAt,
+        originalName = originalName,
     )
 }
 
@@ -63,6 +64,7 @@ fun ImageListItem.toEntity(
         status = status.name,
         importedAt = importedAt,
         tagsJson = converters.toTagsJson(tags),
+        originalName = originalName,
     )
 
 fun ImageStatus.toStorage(): String = name

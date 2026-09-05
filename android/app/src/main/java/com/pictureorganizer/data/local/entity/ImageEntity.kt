@@ -12,4 +12,6 @@ data class ImageEntity(
     val status: String,
     val importedAt: Long,
     val tagsJson: String,
+    /** F11：导入时 Uri DISPLAY_NAME；历史/未知为 null */
+    val originalName: String? = null,
 )

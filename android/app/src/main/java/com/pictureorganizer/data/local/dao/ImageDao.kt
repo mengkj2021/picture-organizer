@@ -32,4 +32,8 @@ interface ImageDao {
 
     @Query("SELECT * FROM images")
     suspend fun getAll(): List<ImageEntity>
+
+    /** F11：非空原图名（判重用；调用方再 normalize） */
+    @Query("SELECT originalName FROM images WHERE originalName IS NOT NULL AND originalName != ''")
+    suspend fun getStoredOriginalNames(): List<String>
 }

@@ -20,6 +20,7 @@
 - [x] C10：导入前「按规则压缩」开关（DataStore）
 - [x] P1：导入失败明细列表（弹窗；单张/全部重试；替代原 Snackbar）
 - [x] F10：导入中系统返回全程拦截；成功后停留可续导 + Snackbar；进入时清理 pending 孤儿
+- [x] F11：按原图名判重；无冲突先导入，冲突逐张询问；设置开关可关（默认开）
 
 | 区域 | 文档 |
 |---|---|
@@ -56,8 +57,9 @@
 
 - `ImportScreen` / `ImportViewModel`
 - `AppFileManager`、`ImageManager`；`ImageRepository.insert`
-- `UserPreferencesRepository`：`import_compress_enabled`、`default_tag_names`（合并进导入标签）
+- `UserPreferencesRepository`：`import_compress_enabled`、`import_duplicate_ask_enabled`、`default_tag_names`（合并进导入标签）
 - **F7**：导入前从源 Uri 读 Exif `UserComment`，与默认标签并集去重后写 `tagsJson`，并进词表
+- **F11**：导入写入 `originalName`（Uri `DISPLAY_NAME`）；判重依赖库内非 null 原图名 + 本批已导入
 - 详见 [架构设计.md](../../设计/架构设计.md)
 
 ## 9. 待定事项
@@ -76,3 +78,4 @@
 | 2026-09-02 | Bug4 返回；F3 重复导入提示 | 见开发日志 |
 | 2026-09-04 | F7：压缩前 Exif 回读 + 默认标签并集 + 词表入库 | 见开发日志-2026-09-04-F7 |
 | 2026-09-04 | F10：返回全程拦截；成功停留 + Snackbar；pending 孤儿清理 | 见开发日志-2026-09-04-F10 |
+| 2026-09-05 | F11：原图名判重 + 逐张询问 + 设置开关 | 见开发日志-2026-09-05-F11 |

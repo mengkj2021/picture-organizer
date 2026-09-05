@@ -27,6 +27,8 @@ object MockImageRepository : ImageRepository {
 
     override suspend fun getItem(id: String): ImageListItem? = items.value.find { it.id == id }
 
+    override suspend fun getStoredOriginalNames(): List<String> = items.value.mapNotNull { it.originalName?.takeIf { n -> n.isNotBlank() } }
+
     override suspend fun moveItems(
         ids: Set<String>,
         from: ImageStatus,
@@ -92,8 +94,7 @@ object MockImageRepository : ImageRepository {
         return true
     }
 
-    override suspend fun countImagesWithTag(tagName: String): Int =
-        ImageListItem.countImagesWithTag(items.value.map { it.tags }, tagName)
+    override suspend fun countImagesWithTag(tagName: String): Int = ImageListItem.countImagesWithTag(items.value.map { it.tags }, tagName)
 
     override suspend fun removeTagFromAllImages(tagName: String): Int {
         val target = tagName.trim()

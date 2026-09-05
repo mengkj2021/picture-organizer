@@ -13,6 +13,8 @@ import com.pictureorganizer.model.Tag
 import com.pictureorganizer.util.file.AppFileManager
 import com.pictureorganizer.util.image.ImageManager
 import com.pictureorganizer.util.image.ImageTagMetadata
+import com.pictureorganizer.util.image.ImportDuplicateLogic
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +29,9 @@ import java.io.IOException
 
 sealed interface ImportUiEffect {
     /** F10：本批（含重试）全部成功，停留导入画面并提示完成 */
-    data class ImportCompleted(val successCount: Int) : ImportUiEffect
+    data class ImportCompleted(
+        val successCount: Int,
+    ) : ImportUiEffect
 }
 
 class ImportViewModel(
@@ -42,6 +46,8 @@ class ImportViewModel(
 
     private val _effects = Channel<ImportUiEffect>(Channel.BUFFERED)
     val effects = _effects.receiveAsFlow()
+
+    private var pendingDuplicateDecision: CompletableDeferred<DuplicateAskDecision>? = null
 
     init {
         viewModelScope.launch {
@@ -60,6 +66,14 @@ class ImportViewModel(
         }
     }
 
+    /** F11：回答同名询问 */
+    fun answerDuplicate(decision: DuplicateAskDecision) {
+        val deferred = pendingDuplicateDecision ?: return
+        pendingDuplicateDecision = null
+        _uiState.update { it.copy(duplicatePrompt = null) }
+        deferred.complete(decision)
+    }
+
     fun importUris(uris: List<Uri>) {
         if (uris.isEmpty() || _uiState.value.isImporting) return
         val compressEnabled = _uiState.value.compressEnabled
@@ -70,28 +84,92 @@ class ImportViewModel(
                     current = 0,
                     total = uris.size,
                     failedItems = emptyList(),
+                    duplicatePrompt = null,
                 )
             }
             val failures = mutableListOf<FailedImportItem>()
-            uris.forEachIndexed { index, uri ->
+            var successCount = 0
+            var progress = 0
+
+            fun bumpProgress() {
+                progress++
                 _uiState.update {
-                    it.copy(current = index + 1, total = uris.size)
-                }
-                importSingle(uri, compressEnabled).onFailure { e ->
-                    failures +=
-                        FailedImportItem(
-                            uri = uri,
-                            displayName = imageManager.displayNameOf(uri),
-                            errorKind = errorKindOf(e),
-                            errorDetail = errorDetailOf(e),
-                        )
+                    it.copy(current = progress, total = uris.size)
                 }
             }
+
+            suspend fun runOne(uri: Uri) {
+                bumpProgress()
+                importSingle(uri, compressEnabled)
+                    .onSuccess { successCount++ }
+                    .onFailure { e ->
+                        failures +=
+                            FailedImportItem(
+                                uri = uri,
+                                displayName = imageManager.displayNameOf(uri),
+                                errorKind = errorKindOf(e),
+                                errorDetail = errorDetailOf(e),
+                            )
+                    }
+            }
+
+            val askEnabled = userPreferences.isImportDuplicateAskEnabled()
+            if (!askEnabled) {
+                uris.forEach { runOne(it) }
+            } else {
+                data class NamedUri(
+                    val uri: Uri,
+                    val originalName: String,
+                )
+                val named =
+                    withContext(Dispatchers.IO) {
+                        uris.map { NamedUri(it, imageManager.displayNameOf(it)) }
+                    }
+                val libraryNormalized =
+                    withContext(Dispatchers.IO) {
+                        repository
+                            .getStoredOriginalNames()
+                            .map { ImportDuplicateLogic.normalize(it) }
+                            .toSet()
+                    }
+                val partitioned =
+                    ImportDuplicateLogic.partition(
+                        candidates = named,
+                        nameOf = { it.originalName },
+                        libraryNormalized = libraryNormalized,
+                    )
+                partitioned.autoImport.forEach { runOne(it.uri) }
+
+                var skipAsking = false
+                for (item in partitioned.conflicts) {
+                    if (skipAsking) {
+                        runOne(item.uri)
+                        continue
+                    }
+                    val decision = awaitDuplicateDecision(item.originalName)
+                    when (decision) {
+                        DuplicateAskDecision.Skip -> bumpProgress()
+                        DuplicateAskDecision.Import -> runOne(item.uri)
+                        DuplicateAskDecision.SkipAskingRest -> {
+                            skipAsking = true
+                            runOne(item.uri)
+                        }
+                    }
+                }
+            }
+
             _uiState.update {
-                it.copy(isImporting = false, current = 0, total = 0)
+                it.copy(
+                    isImporting = false,
+                    current = 0,
+                    total = 0,
+                    duplicatePrompt = null,
+                )
             }
             if (failures.isEmpty()) {
-                _effects.send(ImportUiEffect.ImportCompleted(uris.size))
+                if (successCount > 0) {
+                    _effects.send(ImportUiEffect.ImportCompleted(successCount))
+                }
             } else {
                 _uiState.update { it.copy(failedItems = failures) }
             }
@@ -159,6 +237,15 @@ class ImportViewModel(
         _uiState.update { it.copy(failedItems = emptyList()) }
     }
 
+    private suspend fun awaitDuplicateDecision(originalName: String): DuplicateAskDecision {
+        val deferred = CompletableDeferred<DuplicateAskDecision>()
+        pendingDuplicateDecision = deferred
+        _uiState.update {
+            it.copy(duplicatePrompt = DuplicatePrompt(originalName = originalName))
+        }
+        return deferred.await()
+    }
+
     private fun removeFailure(uri: Uri) {
         _uiState.update { state ->
             state.copy(failedItems = state.failedItems.filterNot { it.uri == uri })
@@ -202,6 +289,7 @@ class ImportViewModel(
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
+                val originalName = imageManager.displayNameOf(uri)
                 // F7：压缩前读源 Exif（重编码会剥离 UserComment）
                 val exifTags = imageManager.readUserTagsFromUri(uri)
                 val prepared = imageManager.prepareForImport(uri, compressEnabled)
@@ -214,6 +302,7 @@ class ImportViewModel(
                         description = prepared.fileName,
                         status = ImageStatus.Pending,
                         tags = mergedTags,
+                        originalName = originalName,
                     )
                 repository.insert(
                     item = item,

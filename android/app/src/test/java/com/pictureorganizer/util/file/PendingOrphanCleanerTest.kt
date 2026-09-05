@@ -19,20 +19,22 @@ class PendingOrphanCleanerTest {
     @Test
     fun orphanFileNames_emptyPending_yieldsEmpty() {
         assertTrue(
-            PendingOrphanCleaner.orphanFileNames(
-                pendingFileNames = emptyList(),
-                knownRelativePaths = listOf("pending/a.jpg"),
-            ).isEmpty(),
+            PendingOrphanCleaner
+                .orphanFileNames(
+                    pendingFileNames = emptyList(),
+                    knownRelativePaths = listOf("pending/a.jpg"),
+                ).isEmpty(),
         )
     }
 
     @Test
     fun orphanFileNames_allKnown_yieldsEmpty() {
         assertTrue(
-            PendingOrphanCleaner.orphanFileNames(
-                pendingFileNames = listOf("a.jpg", "b.png"),
-                knownRelativePaths = listOf("pending/a.jpg", "pending/b.png"),
-            ).isEmpty(),
+            PendingOrphanCleaner
+                .orphanFileNames(
+                    pendingFileNames = listOf("a.jpg", "b.png"),
+                    knownRelativePaths = listOf("pending/a.jpg", "pending/b.png"),
+                ).isEmpty(),
         )
     }
 

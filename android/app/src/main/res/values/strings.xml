@@ -56,6 +56,12 @@
     <string name="import_error_read">无法读取文件</string>
     <string name="import_error_decode">无法解码图片</string>
     <string name="import_error_unknown">未知错误</string>
+    <string name="import_duplicate_title">发现同名图片</string>
+    <string name="import_duplicate_message">原先已导入过同名图片「%1$s」。是否仍要导入？</string>
+    <string name="import_duplicate_skip">跳过这张</string>
+    <string name="import_duplicate_import">导入这张</string>
+    <string name="import_duplicate_skip_asking_rest">本次不再询问</string>
+    <string name="import_duplicate_settings_hint">可在「设置 → 导入重名询问」中关闭</string>
     <string name="action_back">返回</string>
     <string name="detail_title">图片详情</string>
     <string name="detail_missing">图片不存在或已删除</string>
@@ -88,6 +94,8 @@
     <string name="settings_rename_templates_desc">管理文件名规则，详情可套用</string>
     <string name="settings_default_tags">默认标签</string>
     <string name="settings_default_tags_desc">导入时自动打上的标签</string>
+    <string name="settings_import_duplicate_ask">导入重名询问</string>
+    <string name="settings_import_duplicate_ask_desc">原图名与库中相同的，导入前逐张确认</string>
     <string name="settings_tutorial">查看教程</string>
     <string name="settings_tutorial_desc">再次浏览使用引导</string>
     <string name="rename_template_manage_title">重命名模板</string>

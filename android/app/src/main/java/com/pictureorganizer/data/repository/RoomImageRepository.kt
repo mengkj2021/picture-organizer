@@ -32,6 +32,11 @@ class RoomImageRepository(
 
     override suspend fun getItem(id: String): ImageListItem? = imageDao.findById(id)?.toListItem()
 
+    override suspend fun getStoredOriginalNames(): List<String> =
+        withContext(Dispatchers.IO) {
+            imageDao.getStoredOriginalNames()
+        }
+
     override suspend fun moveItems(
         ids: Set<String>,
         from: ImageStatus,

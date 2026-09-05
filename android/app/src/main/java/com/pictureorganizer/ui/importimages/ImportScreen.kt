@@ -229,6 +229,53 @@ fun ImportScreen(
         }
     }
 
+    val duplicatePrompt = state.duplicatePrompt
+    if (duplicatePrompt != null) {
+        AlertDialog(
+            onDismissRequest = { /* 必须显式选择；挂起期间不可关闭 */ },
+            title = { Text(stringResource(R.string.import_duplicate_title)) },
+            text = {
+                Column {
+                    Text(
+                        stringResource(
+                            R.string.import_duplicate_message,
+                            duplicatePrompt.originalName,
+                        ),
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = stringResource(R.string.import_duplicate_settings_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.answerDuplicate(DuplicateAskDecision.Import) },
+                ) {
+                    Text(stringResource(R.string.import_duplicate_import))
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(
+                        onClick = { viewModel.answerDuplicate(DuplicateAskDecision.Skip) },
+                    ) {
+                        Text(stringResource(R.string.import_duplicate_skip))
+                    }
+                    TextButton(
+                        onClick = {
+                            viewModel.answerDuplicate(DuplicateAskDecision.SkipAskingRest)
+                        },
+                    ) {
+                        Text(stringResource(R.string.import_duplicate_skip_asking_rest))
+                    }
+                }
+            },
+        )
+    }
+
     if (state.failedItems.isNotEmpty() && !state.isImporting) {
         AlertDialog(
             onDismissRequest = { viewModel.dismissFailures() },

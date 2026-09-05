@@ -12,6 +12,8 @@ data class ImageListItem(
     val filePath: String = "",
     /** 导入时间毫秒（F6 排序） */
     val importedAt: Long = 0L,
+    /** F11：导入前原图名（DISPLAY_NAME）；历史可为 null */
+    val originalName: String? = null,
 ) {
     fun withStatus(newStatus: ImageStatus): ImageListItem =
         copy(

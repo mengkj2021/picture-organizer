@@ -13,6 +13,9 @@ interface ImageRepository {
 
     suspend fun getItem(id: String): ImageListItem?
 
+    /** F11：库内已存非空原图名（未 normalize） */
+    suspend fun getStoredOriginalNames(): List<String>
+
     suspend fun moveItems(
         ids: Set<String>,
         from: ImageStatus,

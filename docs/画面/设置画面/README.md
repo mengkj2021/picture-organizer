@@ -6,7 +6,7 @@
 |---|---|
 | 画面名称 | 设置画面 |
 | route | `settings` |
-| 职责 | App 设置入口：标签管理、重命名模板、默认标签、查看教程 |
+| 职责 | App 设置入口：标签管理、重命名模板、默认标签、导入重名询问开关、查看教程 |
 
 ## 2. 路由定义
 
@@ -19,18 +19,19 @@
 - [x] 「标签管理」→ `tag-manage`
 - [x] 「重命名模板」→ `rename-template-manage`
 - [x] 「默认标签」→ `default-tags`
+- [x] **F11**「导入重名询问」Switch（默认开；关则导入不询问）
 - [x] 「查看教程」→ `tutorial`（`fromSettings=true`，返回设置）
 
 ## 4. 用户操作
 
 1. 主画面齿轮进入
-2. 点各列表项进入对应画面
+2. 点各列表项进入对应画面；切换「导入重名询问」即时写入 DataStore
 3. 返回主画面
 
 ## 5. UI 描述
 
 - `TopAppBar`「设置」+ 返回
-- `LazyColumn` 多行 `ListItem`
+- `LazyColumn`：导航行 `ListItem` + **F11** Switch 行（标题「导入重名询问」，说明「原图名与库中相同的，导入前逐张确认」）
 
 ## 6. 系统返回动作
 
@@ -48,7 +49,7 @@
 
 ## 8. 数据依赖
 
-- 纯导航
+- `SettingsViewModel` + `UserPreferencesRepository.importDuplicateAskEnabled`（key `import_duplicate_ask_enabled`，默认 true）
 
 ## 9. 待定事项
 
@@ -60,3 +61,4 @@
 |---|---|---|
 | 2026-08-30 | 极简设置（C5 入口） | （待提交） |
 | 2026-08-31 | C9：重命名模板 / 默认标签 / 教程入口 | （待提交） |
+| 2026-09-05 | F11：导入重名询问 Switch 行 | 见开发日志-2026-09-05-F11 |
