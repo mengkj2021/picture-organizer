@@ -1,0 +1,110 @@
+#!/bin/sh
+# F19：push 前自动跑 ktlintCheck；失败则拒绝推送（不改历史、不自动提交）
+# 启用：在仓库根执行  git config core.hooksPath .githooks
+# 本文件须可执行（git 索引 100755）；否则 macOS/Linux 上 hooksPath 启用后仍可能静默不跑
+#
+# 优化：本次推送的提交范围内若无 android/ 下 .kt / .kts 变更，跳过 ktlint（纯文档等推送更快）
+
+ROOT=$(git rev-parse --show-toplevel) || exit 1
+zero=0000000000000000000000000000000000000000
+
+# stdin：每行 local_ref local_sha remote_ref remote_sha
+need_ktlint=0
+while read -r local_ref local_sha remote_ref remote_sha
+do
+  # 删除远端分支等：无本地 tip，跳过检查
+  if [ "$local_sha" = "$zero" ]; then
+    continue
+  fi
+  if [ "$remote_sha" = "$zero" ]; then
+    # 新分支：相对默认/主分支估范围；失败则对该 tip 与其父比较
+    range="$local_sha"
+    if git rev-parse --verify origin/main >/dev/null 2>&1; then
+      range="origin/main..$local_sha"
+    elif git rev-parse --verify main >/dev/null 2>&1; then
+      range="main..$local_sha"
+    fi
+  else
+    range="$remote_sha..$local_sha"
+  fi
+  if git diff --name-only "$range" 2>/dev/null | grep -E '^android/.*\.(kt|kts)$' >/dev/null 2>&1; then
+    need_ktlint=1
+    break
+  fi
+done
+
+if [ "$need_ktlint" -eq 0 ]; then
+  echo "[pre-push] 本次推送无 android/ 下 .kt/.kts 变更，跳过 ktlintCheck"
+  exit 0
+fi
+
+cd "$ROOT/android" || {
+  echo "[pre-push] 无法进入 android/，中止 push"
+  exit 1
+}
+
+echo "[pre-push] 正在执行 ktlintCheck …"
+
+run_ktlint_windows() {
+  # cmd 需要 Windows 风格 JAVA_HOME；优先无空格的用户 jdks
+  win_java=""
+  if [ -n "$JAVA_HOME" ]; then
+    win_java=$(cygpath -w "$JAVA_HOME" 2>/dev/null || echo "$JAVA_HOME")
+  elif [ -d "$USERPROFILE/.jdks/jbr-17.0.9" ]; then
+    win_java="$USERPROFILE\\.jdks\\jbr-17.0.9"
+  elif [ -d "/c/Program Files/Android/Android Studio/jbr" ]; then
+    win_java="C:\\Program Files\\Android\\Android Studio\\jbr"
+  fi
+
+  if [ -n "$win_java" ]; then
+    cmd.exe //c "set \"JAVA_HOME=$win_java\"&& gradlew.bat ktlintCheck"
+  else
+    cmd.exe //c "gradlew.bat ktlintCheck"
+  fi
+}
+
+run_ktlint() {
+  case "$(uname -s 2>/dev/null)" in
+    MINGW*|MSYS*|CYGWIN*)
+      if [ -f "./gradlew.bat" ]; then
+        run_ktlint_windows
+        return $?
+      fi
+      ;;
+  esac
+
+  if [ -z "$JAVA_HOME" ]; then
+    for candidate in \
+      "$HOME/.jdks/jbr-17.0.9" \
+      "/c/Program Files/Android/Android Studio/jbr"
+    do
+      if [ -d "$candidate" ]; then
+        export JAVA_HOME="$candidate"
+        break
+      fi
+    done
+  fi
+
+  if [ -f "./gradlew" ]; then
+    ./gradlew ktlintCheck
+    return $?
+  fi
+  if [ -f "./gradlew.bat" ]; then
+    run_ktlint_windows
+    return $?
+  fi
+  echo "[pre-push] 未找到 gradlew / gradlew.bat"
+  return 127
+}
+
+if ! run_ktlint; then
+  echo ""
+  echo "[pre-push] ktlintCheck 失败，已中止 push。"
+  echo "  修复示例：cd android && ./gradlew ktlintFormat"
+  echo "  再确认：  cd android && ./gradlew ktlintCheck"
+  echo "  紧急跳过（不推荐）：git push --no-verify"
+  exit 1
+fi
+
+echo "[pre-push] ktlintCheck 通过"
+exit 0

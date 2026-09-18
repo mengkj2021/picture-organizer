@@ -1,0 +1,32 @@
+*.iml
+.gradle
+.kotlin
+.idea
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# 本地 Gradle 发行包（约 130MB，超过 GitHub 100MB 单文件限制，不提交）
+android/gradle/wrapper/*.zip
+# Gradle Daemon JVM toolchain（updateDaemonJvm 生成本地配置）
+android/gradle/gradle-daemon-jvm.properties
+
+# 敏感 / 辅助文件（防御性忽略）
+*.jks
+*.keystore
+*.hprof
+*.log
+
+# .codebuddy：仅提交 rules/ 与 skills/，其余全部忽略
+.codebuddy/*
+!.codebuddy/
+!.codebuddy/rules
+!.codebuddy/rules/**
+!.codebuddy/skills
+!.codebuddy/skills/**
+
+# 本地临时阅读/分析（不入库）
+.tmp/
